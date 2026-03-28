@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Mic, Camera, PenLine, Square } from "lucide-react";
+import { Plus, X, Mic, Camera, PenLine, Square, Check } from "lucide-react";
 import {
   useCreateEntry,
   useGetCategories,
@@ -43,6 +43,28 @@ function parseTranscript(text: string): { amount: string; description: string } 
   return { amount, description };
 }
 
+// Keyword → category name pattern mapping
+const CATEGORY_KEYWORDS: Array<{ patterns: string[]; nameMatch: string }> = [
+  { patterns: ["petrol", "fuel", "uber", "taxi", "bus", "train", "transport"], nameMatch: "transport" },
+  { patterns: ["groceries", "grocery", "food", "woolworths", "checkers", "pick n pay", "spar", "shoprite"], nameMatch: "groceries" },
+  { patterns: ["restaurant", "coffee", "lunch", "dinner", "breakfast", "takeaway", "kfc", "mcdonald", "steers"], nameMatch: "eating out" },
+  { patterns: ["netflix", "spotify", "movies", "cinema", "game", "entertainment"], nameMatch: "fun" },
+  { patterns: ["rent", "electricity", "water", "insurance", "internet", "wifi", "phone"], nameMatch: "bills" },
+];
+
+interface SuggestableCategory { id: string; name: string }
+
+function suggestCategoryId(text: string, categories: SuggestableCategory[]): string | null {
+  const lower = text.toLowerCase();
+  for (const { patterns, nameMatch } of CATEGORY_KEYWORDS) {
+    if (patterns.some((kw) => lower.includes(kw))) {
+      const match = categories.find((c) => c.name.toLowerCase().includes(nameMatch));
+      if (match) return match.id;
+    }
+  }
+  return null;
+}
+
 const isSpeechAvailable =
   typeof window !== "undefined" &&
   Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
@@ -58,6 +80,9 @@ export function LogEntryDrawer() {
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
+
+  // Category suggestion state
+  const [isCategorySuggested, setIsCategorySuggested] = useState(false);
 
   // Voice-specific state
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle");
@@ -77,6 +102,7 @@ export function LogEntryDrawer() {
     setCategoryId("");
     setDescription("");
     setIsRecurring(false);
+    setIsCategorySuggested(false);
     setTab("manual");
     setShowConfirmation(false);
     setConfirmationMsg("");
@@ -128,6 +154,12 @@ export function LogEntryDrawer() {
       const parsed = parseTranscript(result);
       setAmount(parsed.amount);
       setDescription(parsed.description);
+      // Auto-suggest category from the full transcript
+      const suggested = suggestCategoryId(result, categories ?? []);
+      if (suggested) {
+        setCategoryId(suggested);
+        setIsCategorySuggested(true);
+      }
       setVoiceStatus("done");
     };
 
@@ -187,7 +219,10 @@ export function LogEntryDrawer() {
             <button
               key={c.id}
               type="button"
-              onClick={() => setCategoryId(c.id)}
+              onClick={() => {
+                setCategoryId(c.id);
+                setIsCategorySuggested(false);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -211,9 +246,16 @@ export function LogEntryDrawer() {
               >
                 <CategoryIcon name={c.name} size={20} />
               </div>
-              <span style={{ fontFamily: DM, fontWeight: 600, fontSize: 14, color: "#1a1a1a" }}>
+              <span style={{ fontFamily: DM, fontWeight: 600, fontSize: 14, color: "#1a1a1a", flex: 1 }}>
                 {c.name}
               </span>
+              {isSelected && (
+                <Check
+                  size={16}
+                  style={{ color: "#7C9E8A", flexShrink: 0 }}
+                  strokeWidth={2.5}
+                />
+              )}
             </button>
           );
         })}
@@ -332,7 +374,23 @@ export function LogEntryDrawer() {
                           </label>
                           <input
                             type="text" placeholder="Coffee, groceries, etc…"
-                            value={description} onChange={(e) => setDescription(e.target.value)}
+                            value={description}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setDescription(val);
+                              // Only auto-suggest if user hasn't manually picked a category
+                              if (isCategorySuggested || !categoryId) {
+                                const suggested = suggestCategoryId(val, categories ?? []);
+                                if (suggested) {
+                                  setCategoryId(suggested);
+                                  setIsCategorySuggested(true);
+                                } else if (isCategorySuggested) {
+                                  // Typed over the suggestion — clear it
+                                  setCategoryId("");
+                                  setIsCategorySuggested(false);
+                                }
+                              }
+                            }}
                             style={{
                               width: "100%", padding: "14px 16px", background: "#FFFFFF",
                               border: "none", borderRadius: 14, fontFamily: DM, fontSize: 15,
@@ -531,7 +589,21 @@ export function LogEntryDrawer() {
                               </label>
                               <input
                                 type="text" placeholder="Coffee, groceries, etc…"
-                                value={description} onChange={(e) => setDescription(e.target.value)}
+                                value={description}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setDescription(val);
+                                  if (isCategorySuggested || !categoryId) {
+                                    const suggested = suggestCategoryId(val, categories ?? []);
+                                    if (suggested) {
+                                      setCategoryId(suggested);
+                                      setIsCategorySuggested(true);
+                                    } else if (isCategorySuggested) {
+                                      setCategoryId("");
+                                      setIsCategorySuggested(false);
+                                    }
+                                  }
+                                }}
                                 style={{
                                   width: "100%", padding: "14px 16px", background: "#FFFFFF",
                                   border: "none", borderRadius: 14, fontFamily: DM, fontSize: 15,
@@ -546,7 +618,7 @@ export function LogEntryDrawer() {
                             {/* Log + re-record */}
                             <div style={{ display: "flex", gap: 10 }}>
                               <button
-                                onClick={() => { setVoiceStatus("idle"); setTranscript(""); setAmount(""); setDescription(""); }}
+                                onClick={() => { setVoiceStatus("idle"); setTranscript(""); setAmount(""); setDescription(""); setCategoryId(""); setIsCategorySuggested(false); }}
                                 style={{
                                   flex: "0 0 auto", background: "#EEEBE4", color: "#666", border: "none",
                                   borderRadius: 100, padding: "0 18px", height: 52, fontFamily: DM,
