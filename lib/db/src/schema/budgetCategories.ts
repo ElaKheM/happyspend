@@ -1,4 +1,4 @@
-import { pgTable, text, numeric, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, numeric, timestamp, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -11,7 +11,9 @@ export const budgetCategoriesTable = pgTable("budget_categories", {
   colour: text("colour").notNull(),
   icon: text("icon").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [
+  uniqueIndex("budget_categories_user_id_name_unique").on(table.userId, table.name),
+]);
 
 export const insertBudgetCategorySchema = createInsertSchema(budgetCategoriesTable).omit({
   id: true,
