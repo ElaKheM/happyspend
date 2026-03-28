@@ -8,7 +8,10 @@ import {
   getGetDashboardQueryKey,
   getGetEntriesQueryKey,
   getGetCategoryStatusQueryKey,
+  getCorrections,
+  createCorrection,
 } from "@workspace/api-client-react";
+import type { CategoryCorrection } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CategoryIcon } from "@/components/category-icon";
 
@@ -53,15 +56,33 @@ const CATEGORY_KEYWORDS: Array<{ patterns: string[]; nameMatch: string }> = [
 ];
 
 interface SuggestableCategory { id: string; name: string }
+interface SuggestResult { categoryId: string; keyword: string }
 
-function suggestCategoryId(text: string, categories: SuggestableCategory[]): string | null {
+function suggestCategoryId(
+  text: string,
+  categories: SuggestableCategory[],
+  corrections: CategoryCorrection[],
+): SuggestResult | null {
   const lower = text.toLowerCase();
-  for (const { patterns, nameMatch } of CATEGORY_KEYWORDS) {
-    if (patterns.some((kw) => lower.includes(kw))) {
-      const match = categories.find((c) => c.name.toLowerCase().includes(nameMatch));
-      if (match) return match.id;
+
+  // 1. User's personal corrections take precedence
+  for (const correction of corrections) {
+    if (lower.includes(correction.descriptionKeyword)) {
+      // Verify the chosen category still exists
+      const cat = categories.find((c) => c.id === correction.chosenCategoryId);
+      if (cat) return { categoryId: cat.id, keyword: correction.descriptionKeyword };
     }
   }
+
+  // 2. Fall back to keyword map
+  for (const { patterns, nameMatch } of CATEGORY_KEYWORDS) {
+    const hit = patterns.find((kw) => lower.includes(kw));
+    if (hit) {
+      const match = categories.find((c) => c.name.toLowerCase().includes(nameMatch));
+      if (match) return { categoryId: match.id, keyword: hit };
+    }
+  }
+
   return null;
 }
 
@@ -83,6 +104,10 @@ export function LogEntryDrawer() {
 
   // Category suggestion state
   const [isCategorySuggested, setIsCategorySuggested] = useState(false);
+  const [suggestedKeyword, setSuggestedKeyword] = useState("");
+
+  // Personalised corrections loaded from the server
+  const [corrections, setCorrections] = useState<CategoryCorrection[]>([]);
 
   // Voice-specific state
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle");
@@ -97,12 +122,20 @@ export function LogEntryDrawer() {
   const personaName = dashData?.persona?.name ?? "";
   const personaConfirmation = PERSONA_CONFIRMATIONS[personaName] ?? "One more proof you're becoming someone who's good with money.";
 
+  // Load personalised corrections once on mount
+  useEffect(() => {
+    getCorrections()
+      .then(setCorrections)
+      .catch(() => {});
+  }, []);
+
   const resetForm = () => {
     setAmount("");
     setCategoryId("");
     setDescription("");
     setIsRecurring(false);
     setIsCategorySuggested(false);
+    setSuggestedKeyword("");
     setTab("manual");
     setShowConfirmation(false);
     setConfirmationMsg("");
@@ -155,10 +188,11 @@ export function LogEntryDrawer() {
       setAmount(parsed.amount);
       setDescription(parsed.description);
       // Auto-suggest category from the full transcript
-      const suggested = suggestCategoryId(result, categories ?? []);
-      if (suggested) {
-        setCategoryId(suggested);
+      const suggestion = suggestCategoryId(result, categories ?? [], corrections);
+      if (suggestion) {
+        setCategoryId(suggestion.categoryId);
         setIsCategorySuggested(true);
+        setSuggestedKeyword(suggestion.keyword);
       }
       setVoiceStatus("done");
     };
@@ -220,8 +254,19 @@ export function LogEntryDrawer() {
               key={c.id}
               type="button"
               onClick={() => {
+                // If the user overrides an auto-suggestion with a different category, save the correction
+                if (isCategorySuggested && suggestedKeyword && categoryId && c.id !== categoryId) {
+                  createCorrection({
+                    descriptionKeyword: suggestedKeyword,
+                    suggestedCategoryId: categoryId,
+                    chosenCategoryId: c.id,
+                  })
+                    .then((saved) => setCorrections((prev) => [...prev, saved]))
+                    .catch(() => {});
+                }
                 setCategoryId(c.id);
                 setIsCategorySuggested(false);
+                setSuggestedKeyword("");
               }}
               style={{
                 display: "flex",
@@ -378,16 +423,16 @@ export function LogEntryDrawer() {
                             onChange={(e) => {
                               const val = e.target.value;
                               setDescription(val);
-                              // Only auto-suggest if user hasn't manually picked a category
                               if (isCategorySuggested || !categoryId) {
-                                const suggested = suggestCategoryId(val, categories ?? []);
-                                if (suggested) {
-                                  setCategoryId(suggested);
+                                const suggestion = suggestCategoryId(val, categories ?? [], corrections);
+                                if (suggestion) {
+                                  setCategoryId(suggestion.categoryId);
                                   setIsCategorySuggested(true);
+                                  setSuggestedKeyword(suggestion.keyword);
                                 } else if (isCategorySuggested) {
-                                  // Typed over the suggestion — clear it
                                   setCategoryId("");
                                   setIsCategorySuggested(false);
+                                  setSuggestedKeyword("");
                                 }
                               }
                             }}
@@ -594,13 +639,15 @@ export function LogEntryDrawer() {
                                   const val = e.target.value;
                                   setDescription(val);
                                   if (isCategorySuggested || !categoryId) {
-                                    const suggested = suggestCategoryId(val, categories ?? []);
-                                    if (suggested) {
-                                      setCategoryId(suggested);
+                                    const suggestion = suggestCategoryId(val, categories ?? [], corrections);
+                                    if (suggestion) {
+                                      setCategoryId(suggestion.categoryId);
                                       setIsCategorySuggested(true);
+                                      setSuggestedKeyword(suggestion.keyword);
                                     } else if (isCategorySuggested) {
                                       setCategoryId("");
                                       setIsCategorySuggested(false);
+                                      setSuggestedKeyword("");
                                     }
                                   }
                                 }}

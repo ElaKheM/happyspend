@@ -10,6 +10,7 @@ import summariesRouter from "./summaries";
 import milestonesRouter from "./milestones";
 import profileRouter from "./profile";
 import notificationsRouter from "./notifications";
+import correctionsRouter from "./corrections";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use("/summaries", summariesRouter);
 router.use("/milestones", milestonesRouter);
 router.use("/profile", profileRouter);
 router.use("/notifications", notificationsRouter);
+router.use(correctionsRouter);
 
 export default router;
