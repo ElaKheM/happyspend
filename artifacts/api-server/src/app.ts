@@ -4,6 +4,8 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { seedPersonas } from "./adapters/repositories/personaRepository";
+import { scheduleRecurringEntries } from "./jobs/recurringEntries";
+import { scheduleNotifications } from "./jobs/notifications";
 
 const app: Express = express();
 
@@ -35,5 +37,8 @@ app.use("/api", router);
 seedPersonas().catch((err) => {
   logger.error({ err }, "Failed to seed personas");
 });
+
+scheduleRecurringEntries();
+scheduleNotifications();
 
 export default app;

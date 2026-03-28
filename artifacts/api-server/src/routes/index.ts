@@ -9,6 +9,7 @@ import dashboardRouter from "./dashboard";
 import summariesRouter from "./summaries";
 import milestonesRouter from "./milestones";
 import profileRouter from "./profile";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use("/dashboard", dashboardRouter);
 router.use("/summaries", summariesRouter);
 router.use("/milestones", milestonesRouter);
 router.use("/profile", profileRouter);
+router.use("/notifications", notificationsRouter);
 
 export default router;
