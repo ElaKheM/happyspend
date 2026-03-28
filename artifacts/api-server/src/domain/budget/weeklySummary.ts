@@ -24,19 +24,24 @@ interface Persona {
   milestoneThresholds: Array<{ key: string; label: string; description: string }>;
 }
 
+function dayWord(n: number): string {
+  return n === 1 ? "day" : "days";
+}
+
 function getPersonaOpeningLine(
   personaId: string,
   spent: number,
   budgeted: number,
   daysLogged: number
 ): string {
+  const d = `${daysLogged} ${dayWord(daysLogged)}`;
   const lines: Record<string, string> = {
-    "steady-builder": `You showed up ${daysLogged} out of 7 days this week. That consistency is exactly what building something solid looks like.`,
-    "intentional-spender": `${daysLogged} days logged. Every entry is a deliberate choice — that's the whole game.`,
-    "freedom-seeker": `${daysLogged} days tracked. Every week like this is a week closer to what you're working toward.`,
-    "debt-slayer": `${daysLogged} days in. You're building the habit that makes the number go down.`,
+    "steady-builder": `You showed up ${d} out of 7 this week. That consistency is exactly what building something solid looks like.`,
+    "intentional-spender": `${d} logged. Every entry is a deliberate choice — that's the whole game.`,
+    "freedom-seeker": `${d} tracked. Every week like this is a week closer to what you're working toward.`,
+    "debt-slayer": `${d} in. You're building the habit that makes the number go down.`,
   };
-  return lines[personaId] ?? `${daysLogged} days logged this week. Keep going.`;
+  return lines[personaId] ?? `${d} logged this week. Keep going.`;
 }
 
 function getPersonaClosingLine(personaId: string, newMilestones: string[]): string {
@@ -53,6 +58,10 @@ function getPersonaClosingLine(personaId: string, newMilestones: string[]): stri
   return lines[personaId] ?? "Keep going. Every week counts.";
 }
 
+function formatR(amount: number): string {
+  return "R" + new Intl.NumberFormat("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(amount));
+}
+
 function getCategoryHighlights(entries: Entry[], categories: Category[]): string[] {
   const spendByCategory: Record<string, number> = {};
   for (const entry of entries) {
@@ -65,14 +74,10 @@ function getCategoryHighlights(entries: Entry[], categories: Category[]): string
     .map((c) => {
       const spent = spendByCategory[c.id] ?? 0;
       const weekly = Number(c.monthlyBudget) / 4.33;
-      const pct = weekly === 0 ? 0 : Math.round((spent / weekly) * 100);
-      if (pct <= 75) {
-        return `${c.icon} ${c.name}: on track at ${pct}% of weekly budget`;
-      } else if (pct <= 100) {
-        return `${c.icon} ${c.name}: heads up, at ${pct}% of weekly budget`;
-      } else {
-        return `${c.icon} ${c.name}: ${pct - 100}% more than planned — useful data for next week`;
+      if (weekly <= 0) {
+        return `${c.name}: ${formatR(spent)} spent this week`;
       }
+      return `${c.name}: ${formatR(spent)} of ${formatR(weekly)} this week`;
     })
     .slice(0, 5);
 }
