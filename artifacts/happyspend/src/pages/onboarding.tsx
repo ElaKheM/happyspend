@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 
 const DM_SANS = "'DM Sans', sans-serif";
 
-const PERSONA_THEMES: Record<string, { bg: string; border: string; accent: string }> = {
-  "Steady Builder":      { bg: "#EEF4F0", border: "#7C9E8A", accent: "#7C9E8A" },
-  "Intentional Spender": { bg: "#F4F0E8", border: "#B5956A", accent: "#B5956A" },
-  "Freedom Seeker":      { bg: "#EDF0F7", border: "#6B84B8", accent: "#6B84B8" },
-  "Debt Slayer":         { bg: "#F5EDEE", border: "#B87080", accent: "#B87080" },
+const PERSONA_THEMES: Record<string, { bg: string; selectedBg: string; border: string; accent: string; illoBg: string }> = {
+  "Steady Builder":      { bg: "#EEF4F0", selectedBg: "#D8EDE2", border: "#7C9E8A", accent: "#7C9E8A", illoBg: "#D6E8DF" },
+  "Intentional Spender": { bg: "#F4F0E8", selectedBg: "#EAE3D0", border: "#B5956A", accent: "#B5956A", illoBg: "#E8DECE" },
+  "Freedom Seeker":      { bg: "#EDF0F7", selectedBg: "#D4DFEF", border: "#6B84B8", accent: "#6B84B8", illoBg: "#CFDAEC" },
+  "Debt Slayer":         { bg: "#F5EDEE", selectedBg: "#EDD8DC", border: "#B87080", accent: "#B87080", illoBg: "#EACACE" },
 };
 
 const PRESET_CATEGORIES = [
@@ -92,6 +92,70 @@ const CATEGORY_ICONS: Record<string, () => JSX.Element> = {
   "Transport":  TransportIcon,
   "Fun":        FunIcon,
   "Bills":      BillsIcon,
+};
+
+function SteadyBuilderIllo() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="9" r="5.5" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="20" y1="14.5" x2="20" y2="29" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 18 L13 26" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 18 L27 26" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 29 L15 39" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 29 L25 39" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M17 8 Q20 6 23 8" stroke="#8B7355" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+    </svg>
+  );
+}
+
+function IntentionalSpenderIllo() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="8" r="5.5" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="20" y1="13.5" x2="20" y2="27" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 18 L14 23 L15 28" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+      <path d="M20 18 L26 23 L25 28" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+      <rect x="13.5" y="27" width="13" height="8" rx="2.5" stroke="#7C9E8A" strokeWidth="1.6" fill="none"/>
+      <path d="M20 27 L20 25" stroke="#7C9E8A" strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M20 27 L17 25" stroke="#7C9E8A" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function FreedomSeekerIllo() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="9" r="5.5" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="20" y1="14.5" x2="20" y2="30" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 19 L4 15" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 19 L36 15" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 30 L15 39" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 30 L25 39" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M4 12 L4 15" stroke="#8B7355" strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M36 12 L36 15" stroke="#8B7355" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function DebtSlayerIllo() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <circle cx="22" cy="8.5" r="5.5" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M21 14 L19 29" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 19 L29 13" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M20 19 L11 23" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M19 29 L26 38" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M19 29 L13 38" stroke="#8B7355" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M28 11 L31 9" stroke="#8B7355" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+const PERSONA_ILLOS: Record<string, () => JSX.Element> = {
+  "Steady Builder":      SteadyBuilderIllo,
+  "Intentional Spender": IntentionalSpenderIllo,
+  "Freedom Seeker":      FreedomSeekerIllo,
+  "Debt Slayer":         DebtSlayerIllo,
 };
 
 function PersonIllustration() {
@@ -249,49 +313,79 @@ export default function Onboarding() {
               Who are you becoming?
             </h2>
             <p style={{ color: "#777", marginBottom: 24, fontSize: 14 }}>
-              Choose the path that feels right for you right now.
+              Pick one. You can grow into others later.
             </p>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pb-4">
+            <div className="flex-1 overflow-y-auto no-scrollbar pb-4" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {personas?.map((p) => {
-                const theme = PERSONA_THEMES[p.name] ?? { bg: "#F5F5F5", border: "#aaa", accent: "#aaa" };
+                const theme = PERSONA_THEMES[p.name] ?? { bg: "#F5F5F5", selectedBg: "#E8E8E8", border: "#aaa", accent: "#aaa", illoBg: "#E0E0E0" };
                 const isSelected = selectedPersona === p.id;
+                const Illo = PERSONA_ILLOS[p.name];
                 return (
                   <button
                     key={p.id}
                     onClick={() => setSelectedPersona(p.id)}
                     className="w-full text-left transition-all duration-200"
                     style={{
-                      background: theme.bg,
+                      height: 80,
+                      background: isSelected ? theme.selectedBg : theme.bg,
                       borderRadius: 16,
-                      borderLeft: `4px solid ${theme.border}`,
                       boxShadow: isSelected
-                        ? `0 4px 16px ${theme.border}33`
+                        ? `0 4px 18px ${theme.border}40`
                         : "0 1px 6px rgba(0,0,0,0.06)",
-                      padding: "16px 16px 16px 18px",
-                      outline: isSelected ? `2px solid ${theme.border}` : "none",
-                      outlineOffset: isSelected ? 2 : 0,
+                      padding: "0 16px 0 14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      outline: "none",
+                      border: "none",
+                      borderLeft: `4px solid ${theme.border}`,
                     }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 pr-2">
-                        <div
-                          className="mb-0.5"
-                          style={{ fontFamily: DM_SANS, fontWeight: 700, fontSize: 20, color: "#1a1a1a" }}
-                        >
-                          {p.name}
-                        </div>
-                        <div
-                          className="mb-2"
-                          style={{ fontWeight: 500, color: "#555", fontSize: 14 }}
-                        >
-                          {p.tagline}
-                        </div>
-                        <div style={{ fontSize: 13, color: "#777", lineHeight: 1.5 }}>
-                          {p.description}
-                        </div>
+                    {/* Illustration */}
+                    <div
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 14,
+                        background: isSelected ? theme.illoBg : theme.illoBg + "99",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {Illo && <Illo />}
+                    </div>
+
+                    {/* Text */}
+                    <div style={{ flex: 1, textAlign: "left" }}>
+                      <div style={{ fontFamily: DM_SANS, fontWeight: 700, fontSize: 16, color: "#1a1a1a", lineHeight: 1.2 }}>
+                        {p.name}
                       </div>
-                      <span style={{ color: theme.accent, fontSize: 22, fontWeight: 300, marginTop: 2 }}>›</span>
+                      <div style={{ fontSize: 13, color: "#666", fontWeight: 500, marginTop: 3, lineHeight: 1.3 }}>
+                        {p.tagline}
+                      </div>
+                    </div>
+
+                    {/* Radio button */}
+                    <div
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        border: `2px solid ${isSelected ? theme.accent : "#CCC"}`,
+                        background: isSelected ? theme.accent : "transparent",
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      {isSelected && (
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />
+                      )}
                     </div>
                   </button>
                 );
