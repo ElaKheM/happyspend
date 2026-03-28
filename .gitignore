@@ -47,3 +47,7 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Large assets not tracked in git
+attached_assets/
+**/public/images/onboarding-hero.png
