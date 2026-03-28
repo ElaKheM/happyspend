@@ -18,14 +18,11 @@ const originalFetch = window.fetch;
 window.fetch = async (...args) => {
   const [resource, config] = args;
   const token = localStorage.getItem('happyspend_token');
-  
+
   if (token) {
-    const newConfig = { ...config } || {};
-    newConfig.headers = {
-      ...newConfig.headers,
-      Authorization: `Bearer ${token}`
-    };
-    return originalFetch(resource, newConfig);
+    const headers = new Headers(config?.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+    return originalFetch(resource, { ...(config ?? {}), headers });
   }
   return originalFetch(resource, config);
 };

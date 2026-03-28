@@ -18,7 +18,7 @@ router.post("/complete", requireAuth, async (req, res) => {
   await setOnboardingComplete(userId, personaId);
 
   for (const cat of categories) {
-    if (cat.name && cat.monthlyBudget && cat.colour && cat.icon) {
+    if (cat.name && cat.monthlyBudget != null && cat.colour && cat.icon) {
       await createCategory({
         userId,
         name: cat.name,

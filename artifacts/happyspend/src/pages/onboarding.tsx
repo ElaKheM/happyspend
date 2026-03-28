@@ -518,6 +518,7 @@ export default function Onboarding() {
                           fontWeight: 600,
                           color: isSelected ? "#1a1a1a" : "#bbb",
                           textAlign: "right",
+                          fontVariantNumeric: "slashed-zero",
                         }}
                       />
                     </div>
