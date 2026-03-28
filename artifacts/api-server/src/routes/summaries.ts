@@ -51,7 +51,8 @@ router.get("/weekly", requireAuth, async (req, res) => {
     categories as any,
     achievedKeys,
     weekStart,
-    weekEnd
+    weekEnd,
+    (user.emotionalProfile as any) ?? null
   );
 
   if (summary.newMilestones.length > 0) {

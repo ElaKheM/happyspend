@@ -52,6 +52,10 @@ export async function updateMonthlyIncome(userId: string, monthlyIncome: number 
     .where(eq(usersTable.id, userId));
 }
 
+export async function markSpendDnaUnlocked(userId: string): Promise<void> {
+  await db.update(usersTable).set({ spendDnaUnlocked: true }).where(eq(usersTable.id, userId));
+}
+
 export async function checkAndResetStreak(userId: string, today: string): Promise<void> {
   const user = await findUserById(userId);
   if (!user || !user.lastLoggedDate) return;

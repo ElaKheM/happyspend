@@ -6,8 +6,18 @@ import {
   getAllActiveSubscriptions,
   deletePushSubscription,
 } from "../adapters/repositories/pushSubscriptionRepository";
+import { getPersonalisedCopy, type EmotionalProfile } from "../domain/personalisation";
 
-function buildMessage(streakCount: number): string {
+function buildMessage(
+  streakCount: number,
+  emotionalProfile?: EmotionalProfile | null
+): string {
+  // notification=2 users never receive urgency language — always the soft message
+  if (emotionalProfile?.notification === 2) {
+    return "Just one log. No pressure, no judgment.";
+  }
+
+  // Milestone messages — always shown regardless of profile (these are positive)
   if (streakCount >= 30) {
     return `You did it. Your habit is forming. ${streakCount} days and counting.`;
   }
@@ -23,7 +33,12 @@ function buildMessage(streakCount: number): string {
   if (streakCount === 10) {
     return "You are 56 days away from strengthening and forming a positive habit.";
   }
-  return `Hey — anything to log from today? Your streak is at ${streakCount} days.`;
+
+  // Default daily nudge — personalised if profile matches
+  return (
+    getPersonalisedCopy(emotionalProfile, "push_notification_default") ??
+    `Hey — anything to log from today? Your streak is at ${streakCount} days.`
+  );
 }
 
 async function hasLoggedToday(userId: string, today: string): Promise<boolean> {
@@ -71,7 +86,10 @@ export async function sendScheduledNotifications(): Promise<void> {
       const alreadyLogged = await hasLoggedToday(user.id, today);
       if (alreadyLogged) continue;
 
-      const message = buildMessage(user.streakCount ?? 0);
+      const message = buildMessage(
+        user.streakCount ?? 0,
+        (user.emotionalProfile as any) ?? null
+      );
       const payload = JSON.stringify({ title: "HappySpend", body: message });
 
       const subs = await getAllActiveSubscriptions().then((all) =>

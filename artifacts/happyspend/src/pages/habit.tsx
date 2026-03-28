@@ -2,6 +2,7 @@ import { useGetMe, useGetDashboard } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
 import { format, getDaysInMonth, startOfMonth, isSameDay } from "date-fns";
 import { useLocation } from "wouter";
+import { Check } from "lucide-react";
 
 const DM = "'DM Sans', sans-serif";
 const SAGE = "#7C9E8A";
@@ -22,6 +23,7 @@ export default function Habit() {
   const streak = user?.streakCount ?? 0;
   const longestStreak = user?.longestStreak ?? 0;
   const lastLoggedDate = user?.lastLoggedDate ?? null;
+  const spendDnaUnlocked = user?.spendDnaUnlocked ?? false;
 
   // Days logged this month (from entries, one per day)
   const recentEntries = dashData?.recentEntries ?? [];
@@ -49,6 +51,8 @@ export default function Habit() {
   let countdownCopy = "";
   if (streak >= GOAL) {
     countdownCopy = "Your habit is formed. This is who you are now.";
+  } else if (spendDnaUnlocked) {
+    countdownCopy = `First unlock complete. ${daysToGoal} days until your habit is fully formed.`;
   } else if (streak >= FIRST_UNLOCK) {
     countdownCopy = `${daysToGoal} days until your habit is formed.`;
   } else {
@@ -167,40 +171,58 @@ export default function Habit() {
           />
           {/* Day 30 marker */}
           <div
+            onClick={spendDnaUnlocked ? () => navigate("/spend-dna") : undefined}
             style={{
               position: "absolute",
               left: `${unlockPct}%`,
-              top: -2,
-              bottom: -2,
-              width: 2,
-              background: "#B5956A",
-              borderRadius: 2,
+              top: -4,
+              width: 20,
+              height: 20,
+              transform: "translateX(-50%)",
+              background: spendDnaUnlocked ? SAGE : "#B5956A",
+              borderRadius: "50%",
               zIndex: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: spendDnaUnlocked ? "pointer" : "default",
+              boxShadow: spendDnaUnlocked ? "0 2px 8px rgba(124,158,138,0.4)" : "none",
+              transition: "background 0.3s",
             }}
-          />
+          >
+            {spendDnaUnlocked && (
+              <Check style={{ width: 11, height: 11, color: "#FFFFFF", strokeWidth: 3 }} />
+            )}
+          </div>
         </div>
 
         <div
           style={{
             display: "flex",
             justifyContent: `${unlockPct}%`,
-            marginTop: 6,
+            marginTop: 10,
             position: "relative",
           }}
         >
-          <span
+          <button
+            onClick={spendDnaUnlocked ? () => navigate("/spend-dna") : undefined}
             style={{
               position: "absolute",
               left: `${unlockPct}%`,
               transform: "translateX(-50%)",
               fontSize: 11,
-              color: "#B5956A",
+              color: spendDnaUnlocked ? SAGE : "#B5956A",
               fontWeight: 600,
               whiteSpace: "nowrap",
+              background: "none",
+              border: "none",
+              cursor: spendDnaUnlocked ? "pointer" : "default",
+              fontFamily: DM,
+              padding: 0,
             }}
           >
-            First unlock
-          </span>
+            {spendDnaUnlocked ? "✓ First unlock" : "First unlock"}
+          </button>
         </div>
       </section>
 

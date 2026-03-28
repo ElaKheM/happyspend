@@ -1,16 +1,30 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe } from "@workspace/api-client-react";
-import { Home, List, Sparkles, User as UserIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Home, List, Flame, Sparkles, User as UserIcon } from "lucide-react";
 
 const DM = "'DM Sans', sans-serif";
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { data: user, isLoading } = useGetMe({
     query: { retry: false, staleTime: 1000 * 60 * 5 }
   });
+
+  // Spend DNA trigger: auto-redirect once on Day 30 — must be before any early returns
+  useEffect(() => {
+    if (
+      user &&
+      user.onboardingComplete &&
+      (user.streakCount ?? 0) >= 30 &&
+      !user.spendDnaUnlocked &&
+      location !== "/spend-dna" &&
+      location !== "/onboarding" &&
+      location !== "/auth"
+    ) {
+      setLocation("/spend-dna");
+    }
+  }, [user, location]);
 
   if (isLoading) {
     return (
@@ -35,7 +49,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
-  const hideNav = isAuthRoute || location === "/onboarding";
+  const hideNav = isAuthRoute || location === "/onboarding" || location === "/spend-dna";
 
   return (
     <div
@@ -54,14 +68,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
             borderTop: "1px solid #EDE9E0",
             boxShadow: "0 -4px 24px rgba(0,0,0,0.04)",
             borderRadius: "20px 20px 0 0",
-            padding: "10px 24px 20px",
+            padding: "10px 16px 20px",
           }}
         >
           <div className="flex justify-between items-center">
-            <NavItem href="/"        icon={<Home className="w-5 h-5" />}     label="Home"    isActive={location === "/"} />
-            <NavItem href="/history" icon={<List className="w-5 h-5" />}     label="History" isActive={location === "/history"} />
-            <NavItem href="/summary" icon={<Sparkles className="w-5 h-5" />} label="Summary" isActive={location === "/summary"} />
-            <NavItem href="/profile" icon={<UserIcon className="w-5 h-5" />} label="Profile" isActive={location === "/profile"} />
+            <NavItem href="/"        icon={<Home className="w-5 h-5" />}      label="Home"    isActive={location === "/"} />
+            <NavItem href="/history" icon={<List className="w-5 h-5" />}      label="History" isActive={location === "/history"} />
+            <NavItem href="/habit"   icon={<Flame className="w-5 h-5" />}     label="Habit"   isActive={location === "/habit"} />
+            <NavItem href="/summary" icon={<Sparkles className="w-5 h-5" />}  label="Summary" isActive={location === "/summary"} />
+            <NavItem href="/profile" icon={<UserIcon className="w-5 h-5" />}  label="Profile" isActive={location === "/profile"} />
           </div>
         </nav>
       )}
@@ -73,7 +88,7 @@ function NavItem({ href, icon, label, isActive }: { href: string; icon: ReactNod
   return (
     <Link
       href={href}
-      className="flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all duration-200"
+      className="flex flex-col items-center gap-1 py-1 px-2 rounded-2xl transition-all duration-200"
       style={{
         color: isActive ? "#7C9E8A" : "#999",
         fontFamily: DM,

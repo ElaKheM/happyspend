@@ -1,5 +1,6 @@
 import { calculatePersonaProgress } from "../persona/personaProgress";
 import { checkNewMilestones } from "../persona/milestones";
+import { getPersonalisedCopy, type EmotionalProfile } from "../personalisation";
 
 interface Entry {
   entryDate: string;
@@ -88,7 +89,8 @@ export function generateWeeklySummary(
   categories: Category[],
   achievedMilestoneKeys: string[],
   weekStart: string,
-  weekEnd: string
+  weekEnd: string,
+  emotionalProfile?: EmotionalProfile | null
 ) {
   const totalBudgeted = categories.reduce(
     (sum, c) => sum + Number(c.monthlyBudget) / 4.33,
@@ -104,9 +106,24 @@ export function generateWeeklySummary(
     achievedMilestoneKeys
   );
 
-  const openingLine = getPersonaOpeningLine(persona.id, totalSpent, totalBudgeted, daysLogged);
+  const isOverSpend = totalSpent > totalBudgeted;
+
+  // Opening: personalise for month_end=0 (relieved), fall back to persona line
+  const openingLine =
+    getPersonalisedCopy(emotionalProfile, "weekly_summary_opening") ??
+    getPersonaOpeningLine(persona.id, totalSpent, totalBudgeted, daysLogged);
+
   const categoryHighlights = getCategoryHighlights(entries, categories);
-  const closingLine = getPersonaClosingLine(persona.id, newMilestones);
+
+  // Closing: personalise for goal=2 milestone, fall back to persona line
+  const closingLine = newMilestones.length > 0
+    ? (getPersonalisedCopy(emotionalProfile, "weekly_summary_milestone_closing") ?? "You hit a new milestone this week. That's not small.")
+    : getPersonaClosingLine(persona.id, newMilestones);
+
+  // Overspend message: only present when over budget
+  const overspendMessage = isOverSpend
+    ? (getPersonalisedCopy(emotionalProfile, "weekly_summary_overspend") ?? "More than planned — useful to know.")
+    : null;
 
   return {
     weekStart,
@@ -121,6 +138,7 @@ export function generateWeeklySummary(
     narrative: {
       openingLine,
       categoryHighlights,
+      overspendMessage,
       closingLine,
     },
     newMilestones,

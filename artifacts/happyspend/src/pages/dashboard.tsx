@@ -1,5 +1,6 @@
 import { useGetDashboard } from "@workspace/api-client-react";
 import { formatMoney } from "@/lib/utils";
+import { getPersonalisedCopy } from "@/lib/personalisation";
 import { motion } from "framer-motion";
 import { LogEntryDrawer } from "@/components/log-entry-drawer";
 import { CategoryIcon } from "@/components/category-icon";
@@ -142,7 +143,9 @@ export default function Dashboard() {
           </div>
 
           <p style={{ fontSize: 14, color: "#4A4A6A", marginBottom: 20, fontWeight: 400 }}>
-            {isOverBudget ? "Adjust next week." : "left this week"}
+            {isOverBudget
+              ? (getPersonalisedCopy(user.emotionalProfile, "dashboard_subtext_over_budget") ?? "Adjust next week.")
+              : (getPersonalisedCopy(user.emotionalProfile, "dashboard_subtext") ?? "left this week")}
           </p>
 
           {/* Progress bar */}

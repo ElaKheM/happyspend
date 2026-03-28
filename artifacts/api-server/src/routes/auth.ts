@@ -5,14 +5,13 @@ import {
   findUserByEmail,
   findUserById,
   createUser,
-  setOnboardingComplete,
+  checkAndResetStreak,
 } from "../adapters/repositories/userRepository";
 import { createCategory } from "../adapters/repositories/budgetRepository";
 
 const router = Router();
 
-function serializeUser(user: Awaited<ReturnType<typeof findUserById>>) {
-  if (!user) return null;
+function serializeUser(user: NonNullable<Awaited<ReturnType<typeof findUserById>>>) {
   return {
     id: user.id,
     email: user.email,
@@ -20,7 +19,12 @@ function serializeUser(user: Awaited<ReturnType<typeof findUserById>>) {
     personaId: user.personaId,
     onboardingComplete: user.onboardingComplete,
     monthlyIncome: user.monthlyIncome != null ? Number(user.monthlyIncome) : null,
+    streakCount: user.streakCount ?? 0,
+    lastLoggedDate: user.lastLoggedDate ?? null,
+    longestStreak: user.longestStreak ?? 0,
     createdAt: user.createdAt.toISOString(),
+    spendDnaUnlocked: user.spendDnaUnlocked ?? false,
+    emotionalProfile: user.emotionalProfile ?? null,
   };
 }
 
@@ -70,11 +74,15 @@ router.post("/login", async (req, res) => {
 });
 
 router.get("/me", requireAuth, async (req, res) => {
+  const today = new Date().toISOString().split("T")[0]!;
+  await checkAndResetStreak(req.user!.userId, today);
+
   const user = await findUserById(req.user!.userId);
   if (!user) {
     res.status(401).json({ error: "User not found" });
     return;
   }
+
   res.json(serializeUser(user));
 });
 

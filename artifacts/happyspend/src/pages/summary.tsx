@@ -89,6 +89,11 @@ export default function Summary() {
                 </li>
               ))}
             </ul>
+            {summary.narrative.overspendMessage && (
+              <p style={{ color: "#8899AA", fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>
+                {summary.narrative.overspendMessage}
+              </p>
+            )}
             <p style={{ color: "#777", fontSize: 14, fontStyle: "italic", borderTop: "1px solid #EEE", paddingTop: 16, lineHeight: 1.6 }}>
               {summary.narrative.closingLine}
             </p>
