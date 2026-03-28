@@ -83,13 +83,13 @@ export default function Habit() {
             <circle
               cx="98" cy="98" r={r}
               fill="none"
-              stroke="#E8E4DC"
+              stroke="#E0EBE5"
               strokeWidth="10"
             />
             <motion.circle
               cx="98" cy="98" r={r}
               fill="none"
-              stroke={SAGE}
+              stroke="#7C9E8A"
               strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={circ}
@@ -131,7 +131,7 @@ export default function Habit() {
 
         {longestStreak > 0 && (
           <p style={{ color: SAGE, fontSize: 13, fontWeight: 600, marginTop: 6 }}>
-            Personal best: {longestStreak} days
+            Personal best: {longestStreak} {longestStreak === 1 ? "day" : "days"}
           </p>
         )}
       </section>
@@ -222,24 +222,29 @@ export default function Habit() {
             const isToday = day === today;
             const isLogged = loggedDaysThisMonth.has(day);
             const isFuture = day > today;
+            const isMissed = isPast && !isLogged;
 
-            let bg = "#E8E4DC"; // future: light grey
+            let bg = "#EEEBE6"; // future: very light
             let border = "none";
+            let dotOpacity = 1;
 
             if (isLogged) {
-              bg = SAGE; // filled: logged
+              bg = "#7C9E8A"; // logged: sage green
             } else if (isToday) {
               bg = "transparent";
-              border = `2px solid ${SAGE}`;
-            } else if (isPast) {
-              bg = "#C8C4BC"; // missed: slightly darker grey
+              border = `2px solid #7C9E8A`; // today unlogged: sage outline
+            } else if (isMissed) {
+              bg = "#E0D8D0"; // missed: warm muted grey
+              dotOpacity = 0.5;
+            } else if (isFuture) {
+              dotOpacity = 0.4;
             }
 
             return (
               <motion.div
                 key={day}
                 initial={{ scale: 0.6, opacity: 0 }}
-                animate={{ scale: 1, opacity: isFuture ? 0.4 : 1 }}
+                animate={{ scale: 1, opacity: dotOpacity }}
                 transition={{ delay: i * 0.012, duration: 0.25 }}
                 style={{
                   width: "100%",
@@ -254,7 +259,7 @@ export default function Habit() {
                 }}
               >
                 {isToday && (
-                  <span style={{ fontSize: 9, color: SAGE, fontWeight: 700 }}>
+                  <span style={{ fontSize: 9, color: "#7C9E8A", fontWeight: 700 }}>
                     {day}
                   </span>
                 )}
@@ -265,9 +270,9 @@ export default function Habit() {
 
         {/* Legend */}
         <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap" }}>
-          <Legend color={SAGE} label="Logged" />
-          <Legend color="#C8C4BC" label="Missed" />
-          <Legend color="#E8E4DC" label="Upcoming" opacity={0.4} />
+          <Legend color="#7C9E8A" label="Logged" />
+          <Legend color="#E0D8D0" label="Missed" opacity={0.5} />
+          <Legend color="#EEEBE6" label="Upcoming" opacity={0.4} />
         </div>
       </section>
 
