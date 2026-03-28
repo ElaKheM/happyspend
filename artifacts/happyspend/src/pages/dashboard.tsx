@@ -332,7 +332,7 @@ export default function Dashboard() {
 }
 
 function CategoryBar({ status }: { status: any }) {
-  const { category, percentageUsed, totalSpent, weeklyBudget, message } = status;
+  const { category, percentageUsed, totalSpent, weeklyBudget, message, reallocation } = status;
 
   let borderColor = "#7C9E8A";
   let barColor = "#7C9E8A";
@@ -398,6 +398,21 @@ function CategoryBar({ status }: { status: any }) {
         />
       </div>
       <p style={{ fontSize: 12, color: "#999" }}>{message}</p>
+
+      {reallocation && (
+        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+          {reallocation.lentAmount != null && reallocation.lentTo != null && (
+            <p style={{ fontSize: 11, color: "#9C9690", lineHeight: 1.4 }}>
+              ↓ {formatMoney(reallocation.lentAmount)} lent to {reallocation.lentTo}
+            </p>
+          )}
+          {reallocation.coveredAmount != null && reallocation.coveredFrom != null && (
+            <p style={{ fontSize: 11, color: "#9C9690", lineHeight: 1.4 }}>
+              ↑ {formatMoney(reallocation.coveredAmount)} covered from {reallocation.coveredFrom}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

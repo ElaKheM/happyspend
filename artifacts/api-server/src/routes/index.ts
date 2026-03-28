@@ -12,6 +12,7 @@ import profileRouter from "./profile";
 import notificationsRouter from "./notifications";
 import correctionsRouter from "./corrections";
 import spendDnaRouter from "./spend-dna";
+import reallocationsRouter from "./reallocations";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use("/profile", profileRouter);
 router.use("/notifications", notificationsRouter);
 router.use(correctionsRouter);
 router.use("/spend-dna", spendDnaRouter);
+router.use("/reallocations", reallocationsRouter);
 
 export default router;

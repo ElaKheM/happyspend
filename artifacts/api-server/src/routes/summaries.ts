@@ -6,6 +6,7 @@ import { getEntriesForUser } from "../adapters/repositories/entryRepository";
 import { getMilestonesForUser, saveMilestones } from "../adapters/repositories/milestoneRepository";
 import { getPersonaById } from "../adapters/repositories/personaRepository";
 import { generateWeeklySummary } from "../domain/budget/weeklySummary";
+import { getReallocationsByWeek } from "../adapters/repositories/reallocationRepository";
 
 const router = Router();
 
@@ -38,10 +39,11 @@ router.get("/weekly", requireAuth, async (req, res) => {
   }
 
   const { weekStart, weekEnd } = getWeekRange();
-  const [categories, entries, milestones] = await Promise.all([
+  const [categories, entries, milestones, reallocations] = await Promise.all([
     getCategoriesForUser(userId),
     getEntriesForUser(userId, { startDate: weekStart, endDate: weekEnd }),
     getMilestonesForUser(userId),
+    getReallocationsByWeek(userId, weekStart, weekEnd),
   ]);
 
   const achievedKeys = milestones.map((m) => m.milestoneKey);
@@ -52,7 +54,11 @@ router.get("/weekly", requireAuth, async (req, res) => {
     achievedKeys,
     weekStart,
     weekEnd,
-    (user.emotionalProfile as any) ?? null
+    (user.emotionalProfile as any) ?? null,
+    reallocations.map((r) => ({
+      fromCategoryId: r.fromCategoryId,
+      fromCategoryName: r.fromCategoryName ?? null,
+    }))
   );
 
   if (summary.newMilestones.length > 0) {

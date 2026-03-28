@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, ReactNode } from "react";
+import { useState, useEffect, useRef, ReactNode, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, Mic, Camera, PenLine, Square, Check } from "lucide-react";
 import {
@@ -14,6 +14,7 @@ import {
 import type { CategoryCorrection } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CategoryIcon } from "@/components/category-icon";
+import { ReallocationSheet, type OverspendData } from "@/components/reallocation-sheet";
 
 const DM = "'DM Sans', sans-serif";
 
@@ -95,6 +96,8 @@ export function LogEntryDrawer() {
   const [tab, setTab] = useState<"manual" | "voice" | "photo">("manual");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationMsg, setConfirmationMsg] = useState("");
+  const [overspendData, setOverspendData] = useState<OverspendData | null>(null);
+  const [showReallocation, setShowReallocation] = useState(false);
 
   // Shared form state
   const [amount, setAmount] = useState("");
@@ -139,6 +142,8 @@ export function LogEntryDrawer() {
     setTab("manual");
     setShowConfirmation(false);
     setConfirmationMsg("");
+    setOverspendData(null);
+    setShowReallocation(false);
     setVoiceStatus("idle");
     setTranscript("");
     stopRecognition();
@@ -153,10 +158,17 @@ export function LogEntryDrawer() {
     let timeout: NodeJS.Timeout;
     if (showConfirmation) {
       const delay = tab === "voice" ? 2000 : 2800;
-      timeout = setTimeout(() => handleClose(), delay);
+      timeout = setTimeout(() => {
+        if (overspendData) {
+          setShowConfirmation(false);
+          setShowReallocation(true);
+        } else {
+          handleClose();
+        }
+      }, delay);
     }
     return () => clearTimeout(timeout);
-  }, [showConfirmation]);
+  }, [showConfirmation, overspendData]);
 
   // Cleanup recognition on unmount
   useEffect(() => () => stopRecognition(), []);
@@ -230,10 +242,11 @@ export function LogEntryDrawer() {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (data: any) => {
           queryClient.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetEntriesQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetCategoryStatusQueryKey() });
+          if (data?.overspend) setOverspendData(data.overspend);
           setConfirmationMsg(personaConfirmation);
           setShowConfirmation(true);
         },
@@ -720,6 +733,13 @@ export function LogEntryDrawer() {
           </>
         )}
       </AnimatePresence>
+
+      {showReallocation && overspendData && (
+        <ReallocationSheet
+          overspendData={overspendData}
+          onClose={handleClose}
+        />
+      )}
     </>
   );
 }

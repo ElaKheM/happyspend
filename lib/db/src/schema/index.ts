@@ -7,3 +7,4 @@ export * from "./weeklySummaries";
 export * from "./pushSubscriptions";
 export * from "./categoryCorrections";
 export * from "./onboardingAnswers";
+export * from "./budgetReallocations";

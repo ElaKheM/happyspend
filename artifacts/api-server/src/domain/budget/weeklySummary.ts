@@ -83,6 +83,11 @@ function getCategoryHighlights(entries: Entry[], categories: Category[]): string
     .slice(0, 5);
 }
 
+interface Reallocation {
+  fromCategoryId: string;
+  fromCategoryName: string | null;
+}
+
 export function generateWeeklySummary(
   persona: Persona,
   entries: Entry[],
@@ -90,7 +95,8 @@ export function generateWeeklySummary(
   achievedMilestoneKeys: string[],
   weekStart: string,
   weekEnd: string,
-  emotionalProfile?: EmotionalProfile | null
+  emotionalProfile?: EmotionalProfile | null,
+  reallocations?: Reallocation[]
 ) {
   const totalBudgeted = categories.reduce(
     (sum, c) => sum + Number(c.monthlyBudget) / 4.33,
@@ -125,6 +131,20 @@ export function generateWeeklySummary(
     ? (getPersonalisedCopy(emotionalProfile, "weekly_summary_overspend") ?? "More than planned — useful to know.")
     : null;
 
+  // Reallocation narrative line
+  let reallocationLine: string | null = null;
+  if (reallocations && reallocations.length > 0) {
+    const spendByFrom: Record<string, number> = {};
+    const nameByFrom: Record<string, string> = {};
+    for (const r of reallocations) {
+      spendByFrom[r.fromCategoryId] = (spendByFrom[r.fromCategoryId] ?? 0) + 1;
+      if (r.fromCategoryName) nameByFrom[r.fromCategoryId] = r.fromCategoryName;
+    }
+    const topFromId = Object.entries(spendByFrom).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const topFromName = topFromId ? (nameByFrom[topFromId] ?? "That category") : "That category";
+    reallocationLine = `${topFromName} is a little lighter this week. Worth keeping an eye on it next week.`;
+  }
+
   return {
     weekStart,
     weekEnd,
@@ -139,6 +159,7 @@ export function generateWeeklySummary(
       openingLine,
       categoryHighlights,
       overspendMessage,
+      reallocationLine,
       closingLine,
     },
     newMilestones,
