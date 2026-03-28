@@ -104,6 +104,8 @@
     @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20;
     /* Prevent pull-to-refresh on mobile PWA for a more native feel */
     overscroll-behavior-y: none;
+    /* Use tabular numerals globally — makes 0 more rectangular and distinct from O */
+    font-variant-numeric: tabular-nums;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display tracking-tight;
