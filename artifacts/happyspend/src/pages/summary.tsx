@@ -1,120 +1,162 @@
 import { useGetWeeklySummary } from "@workspace/api-client-react";
 import { formatMoney } from "@/lib/utils";
-import { Card } from "@/components/ui-elements";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
+
+const DM = "'DM Sans', sans-serif";
 
 export default function Summary() {
   const { data: summary, isLoading } = useGetWeeklySummary();
 
   if (isLoading) {
-    return <div className="p-6 pt-12 flex justify-center"><div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" /></div>;
+    return (
+      <div className="flex justify-center pt-20" style={{ background: "#FAF9F6", minHeight: "100vh" }}>
+        <div
+          className="w-8 h-8 rounded-full border-4 animate-spin"
+          style={{ borderColor: "#E8E4DC", borderTopColor: "#7C9E8A" }}
+        />
+      </div>
+    );
   }
 
   if (!summary) {
-    return <div className="p-6 pt-12 text-center text-muted-foreground">Check back at the end of the week for your summary!</div>;
+    return (
+      <div
+        className="flex flex-col items-center justify-center text-center p-10"
+        style={{ background: "#FAF9F6", minHeight: "100vh", fontFamily: DM }}
+      >
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mb-6">
+          <rect x="15" y="20" width="50" height="50" rx="6" stroke="#8B7355" strokeWidth="2.5" strokeLinecap="round"/>
+          <path d="M15 36 L65 36" stroke="#8B7355" strokeWidth="2.5" strokeLinecap="round"/>
+          <path d="M28 14 L28 28 M52 14 L52 28" stroke="#8B7355" strokeWidth="3" strokeLinecap="round"/>
+        </svg>
+        <h2 style={{ fontFamily: DM, fontWeight: 700, fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>
+          Check back soon
+        </h2>
+        <p style={{ color: "#777", fontSize: 14, lineHeight: 1.6 }}>
+          Your weekly summary will be ready at the end of the week.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden pb-24">
-      {/* Background pattern */}
-      <div className="absolute inset-0 pointer-events-none select-none opacity-5 text-xl flex flex-wrap justify-center content-start gap-16 p-8" aria-hidden="true">
-        <span>📅</span><span className="mt-20">📊</span><span>✨</span><span className="mt-12">📅</span><span>📊</span><span className="mt-32">✨</span><span>📅</span><span className="mt-16">📊</span>
-      </div>
+    <div style={{ background: "#FAF9F6", minHeight: "100vh", fontFamily: DM, paddingBottom: 60 }}>
+      <div style={{ padding: "0 20px", maxWidth: 480, margin: "0 auto" }}>
 
-      <div className="p-6 relative z-10 max-w-md mx-auto">
-        <header className="mb-8 pt-8 flex flex-col items-center text-center">
-          <div className="mb-6">
-            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="25" y="30" width="70" height="75" rx="8" stroke="#8B7355" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M25 55 L95 55" stroke="#8B7355" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M40 20 L40 40 M80 20 L80 40" stroke="#8B7355" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M50 75 L60 85 L75 65" stroke="#5a7a5a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M90 20 C95 15 105 25 100 30 C95 35 85 25 90 20 Z" stroke="#8B7355" strokeWidth="2" />
+        {/* Header */}
+        <header style={{ paddingTop: 48, paddingBottom: 28, textAlign: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <svg width="90" height="90" viewBox="0 0 120 120" fill="none">
+              <rect x="25" y="30" width="70" height="75" rx="8" stroke="#8B7355" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M25 55 L95 55" stroke="#8B7355" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M40 20 L40 40 M80 20 L80 40" stroke="#8B7355" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M48 75 L58 87 L77 65" stroke="#7C9E8A" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h1 className="text-3xl font-['Nunito'] font-extrabold text-foreground">Weekly Check-in</h1>
-          <p className="text-muted-foreground mt-2 text-lg">
-            {format(new Date(summary.weekStart), 'MMM d')} - {format(new Date(summary.weekEnd), 'MMM d, yyyy')}
+          <h1 style={{ fontFamily: DM, fontWeight: 700, fontSize: 28, color: "#1a1a1a", marginBottom: 6 }}>
+            Weekly Check-in
+          </h1>
+          <p style={{ color: "#777", fontSize: 15 }}>
+            {format(new Date(summary.weekStart), "MMM d")} – {format(new Date(summary.weekEnd), "MMM d, yyyy")}
           </p>
         </header>
 
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="space-y-10"
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          style={{ display: "flex", flexDirection: "column", gap: 20 }}
         >
           {/* Narrative Card */}
-          <Card className="p-8 sm:p-10 bg-white border-none shadow-sm rounded-3xl">
-            <div className="prose prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:text-lg">
-              <p className="font-['Nunito'] font-extrabold text-2xl text-foreground mb-6 leading-tight">
-                {summary.narrative.openingLine}
-              </p>
-              
-              <ul className="space-y-4 mb-8 list-none pl-0">
-                {summary.narrative.categoryHighlights.map((highlight, i) => (
-                  <li key={i} className="flex gap-4 items-start text-foreground/80">
-                    <span className="text-muted-foreground mt-1 text-xl">·</span>
-                    <span className="text-lg">{highlight}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <p className="font-medium text-muted-foreground italic text-lg border-t border-border/50 pt-6">
-                {summary.narrative.closingLine}
-              </p>
-            </div>
-          </Card>
-
-          {/* Milestones Celebrations */}
-          {summary.newMilestones.length > 0 && (
-            <div className="space-y-4">
-              {summary.newMilestones.map((m, i) => (
-                <Card key={i} className="p-8 border-none shadow-sm rounded-3xl bg-[#fcfaf8] relative overflow-hidden flex flex-col items-center text-center">
-                  <div className="absolute inset-0 pointer-events-none select-none opacity-5 text-xl flex flex-wrap justify-center content-center gap-8" aria-hidden="true">
-                    <span>⭐</span><span className="mt-8">🌱</span><span>⭐</span><span className="mt-4">🌱</span>
-                  </div>
-                  
-                  <div className="mb-6 relative z-10">
-                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M40 20 L45 35 L60 35 L48 45 L52 60 L40 50 L28 60 L32 45 L20 35 L35 35 Z" stroke="#5a7a5a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M40 10 L40 5 M70 40 L75 40 M40 70 L40 75 M10 40 L5 40" stroke="#8B7355" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M18 18 L14 14 M62 18 L66 14 M62 62 L66 66 M18 62 L14 66" stroke="#8B7355" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  
-                  <h3 className="font-['Nunito'] font-extrabold text-2xl text-foreground mb-2 relative z-10">You hit a new milestone.</h3>
-                  <div className="text-lg font-medium text-foreground capitalize mb-3 relative z-10">
-                    {m.replace(/_/g, ' ')}
-                  </div>
-                  <p className="text-muted-foreground relative z-10">
-                    That's not small. Keep going.
-                  </p>
-                </Card>
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 18,
+              borderLeft: "4px solid #7C9E8A",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+              padding: "24px 22px",
+            }}
+          >
+            <p style={{ fontFamily: DM, fontWeight: 700, fontSize: 20, color: "#1a1a1a", lineHeight: 1.4, marginBottom: 18 }}>
+              {summary.narrative.openingLine}
+            </p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+              {summary.narrative.categoryHighlights.map((highlight: string, i: number) => (
+                <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ color: "#7C9E8A", marginTop: 2, flexShrink: 0, fontSize: 16 }}>·</span>
+                  <span style={{ color: "#555", fontSize: 14, lineHeight: 1.6 }}>{highlight}</span>
+                </li>
               ))}
+            </ul>
+            <p style={{ color: "#777", fontSize: 14, fontStyle: "italic", borderTop: "1px solid #EEE", paddingTop: 16, lineHeight: 1.6 }}>
+              {summary.narrative.closingLine}
+            </p>
+          </div>
+
+          {/* Milestone Celebrations */}
+          {summary.newMilestones.length > 0 && summary.newMilestones.map((m: string, i: number) => (
+            <div
+              key={i}
+              style={{
+                background: "#FFFFFF",
+                borderRadius: 18,
+                borderLeft: "4px solid #B5956A",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                padding: "28px 22px",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ marginBottom: 16 }}>
+                <svg width="70" height="70" viewBox="0 0 80 80" fill="none">
+                  <path d="M40 18 L45 33 L62 33 L49 43 L53 58 L40 48 L27 58 L31 43 L18 33 L35 33 Z" stroke="#B5956A" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M40 8 L40 4 M72 40 L76 40 M40 72 L40 76 M8 40 L4 40" stroke="#8B7355" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M16 16 L13 13 M64 16 L67 13 M64 64 L67 67 M16 64 L13 67" stroke="#8B7355" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h3 style={{ fontFamily: DM, fontWeight: 700, fontSize: 20, color: "#1a1a1a", marginBottom: 8 }}>
+                You hit a new milestone.
+              </h3>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#B5956A", textTransform: "capitalize", marginBottom: 6 }}>
+                {m.replace(/_/g, " ")}
+              </div>
+              <p style={{ color: "#777", fontSize: 13 }}>That's not small. Keep going.</p>
             </div>
-          )}
+          ))}
 
           {/* The Numbers */}
-          <div className="pt-4 pb-12">
-            <h3 className="font-['Nunito'] font-extrabold text-xl mb-6 text-center text-foreground/80">The Numbers</h3>
-            <div className="grid grid-cols-2 gap-4 sm:gap-6">
-              <Card className="p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm border-none bg-white rounded-3xl">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Spent</span>
-                <span className="text-3xl font-display font-bold text-foreground">{formatMoney(summary.weekSummary.totalSpent)}</span>
-              </Card>
-              <Card className="p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm border-none bg-white rounded-3xl">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Budgeted</span>
-                <span className="text-3xl font-display font-bold text-foreground">{formatMoney(summary.weekSummary.totalBudgeted)}</span>
-              </Card>
-              <Card className="p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm border-none bg-white rounded-3xl">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Days</span>
-                <span className="text-3xl font-display font-bold text-foreground">{summary.weekSummary.daysLogged} / 7</span>
-              </Card>
-              <Card className="p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-sm border-none bg-white rounded-3xl">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Entries</span>
-                <span className="text-3xl font-display font-bold text-foreground">{summary.weekSummary.entriesLogged}</span>
-              </Card>
+          <div>
+            <h3 style={{ fontFamily: DM, fontWeight: 700, fontSize: 12, color: "#999", textAlign: "center", marginBottom: 14, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              The Numbers
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {[
+                { label: "Spent",    value: formatMoney(summary.weekSummary.totalSpent) },
+                { label: "Budgeted", value: formatMoney(summary.weekSummary.totalBudgeted) },
+                { label: "Days",     value: `${summary.weekSummary.daysLogged} / 7` },
+                { label: "Entries",  value: summary.weekSummary.entriesLogged },
+              ].map(({ label, value }) => (
+                <div
+                  key={label}
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: 16,
+                    boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+                    padding: "20px 16px",
+                    textAlign: "center",
+                  }}
+                >
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                    {label}
+                  </p>
+                  <p style={{ fontFamily: DM, fontWeight: 700, fontSize: 26, color: "#1a1a1a" }}>
+                    {value}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </motion.div>
