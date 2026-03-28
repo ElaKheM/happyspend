@@ -85,7 +85,7 @@ export default function Dashboard() {
         >
           <Flame className="w-4 h-4" style={{ flexShrink: 0 }} />
           <span>{streakCount}</span>
-          <span style={{ fontWeight: 400, fontSize: 12, opacity: 0.85 }}>day streak</span>
+          <span style={{ fontWeight: 400, fontSize: 12, opacity: 0.85 }}>{streakCount === 1 ? "day" : "days"} streak</span>
         </button>
       </header>
 

@@ -483,7 +483,6 @@ export default function Onboarding() {
                     fontSize: 28,
                     fontWeight: 700,
                     color: "#1a1a1a",
-                    fontVariantNumeric: "tabular-nums slashed-zero",
                   }}
                 />
               </div>
@@ -616,7 +615,6 @@ export default function Onboarding() {
                           fontWeight: 600,
                           color: isSelected ? "#1a1a1a" : "#bbb",
                           textAlign: "right",
-                          fontVariantNumeric: "tabular-nums slashed-zero",
                         }}
                       />
                     </div>
