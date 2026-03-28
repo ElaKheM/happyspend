@@ -1,14 +1,22 @@
-import { useGetMe, useLogout } from "@workspace/api-client-react";
-import { LogOut, Mail, Calendar } from "lucide-react";
+import { useGetMe, useLogout, useUpdateProfile } from "@workspace/api-client-react";
+import { LogOut, Mail, Calendar, Pencil, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetMeQueryKey } from "@workspace/api-client-react";
 
 const DM = "'DM Sans', sans-serif";
 
 export default function Profile() {
   const { data: user } = useGetMe();
   const logout = useLogout();
+  const updateProfile = useUpdateProfile();
+  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+
+  const [editingIncome, setEditingIncome] = useState(false);
+  const [incomeInput, setIncomeInput] = useState("");
 
   const handleLogout = () => {
     logout.mutate(undefined, {
@@ -17,6 +25,30 @@ export default function Profile() {
         setLocation("/auth");
       },
     });
+  };
+
+  const startEditIncome = () => {
+    setIncomeInput(user?.monthlyIncome != null ? String(user.monthlyIncome) : "");
+    setEditingIncome(true);
+  };
+
+  const saveIncome = () => {
+    const n = parseFloat(incomeInput);
+    const income = !isNaN(n) && n > 0 ? n : null;
+    updateProfile.mutate(
+      { monthlyIncome: income },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+          setEditingIncome(false);
+        },
+      }
+    );
+  };
+
+  const cancelEdit = () => {
+    setEditingIncome(false);
+    setIncomeInput("");
   };
 
   if (!user) return null;
@@ -87,6 +119,79 @@ export default function Profile() {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Monthly income card */}
+      <div
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 18,
+          boxShadow: "0 1px 8px rgba(0,0,0,0.07)",
+          padding: "20px",
+          marginBottom: 16,
+        }}
+      >
+        <p style={{ fontSize: 11, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
+          Monthly Income
+        </p>
+
+        {editingIncome ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontFamily: DM, fontWeight: 700, fontSize: 18, color: "#7C9E8A" }}>R</span>
+            <input
+              autoFocus
+              type="number"
+              min={0}
+              placeholder="0"
+              value={incomeInput}
+              onChange={(e) => setIncomeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveIncome();
+                if (e.key === "Escape") cancelEdit();
+              }}
+              style={{
+                flex: 1,
+                border: "none",
+                borderBottom: "2px solid #7C9E8A",
+                outline: "none",
+                background: "transparent",
+                fontFamily: DM,
+                fontSize: 22,
+                fontWeight: 700,
+                color: "#1a1a1a",
+                fontVariantNumeric: "tabular-nums slashed-zero",
+                paddingBottom: 2,
+              }}
+            />
+            <button
+              onClick={saveIncome}
+              disabled={updateProfile.isPending}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+            >
+              <Check className="w-5 h-5" style={{ color: "#7C9E8A" }} />
+            </button>
+            <button
+              onClick={cancelEdit}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+            >
+              <X className="w-5 h-5" style={{ color: "#aaa" }} />
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontFamily: DM, fontWeight: 700, fontSize: 22, color: "#1a1a1a" }}>
+              {user.monthlyIncome != null
+                ? `R ${Intl.NumberFormat("en-ZA").format(user.monthlyIncome)}`
+                : <span style={{ color: "#bbb", fontWeight: 500, fontSize: 15 }}>Not set</span>}
+            </span>
+            <button
+              onClick={startEditIncome}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 6 }}
+            >
+              <Pencil className="w-4 h-4" style={{ color: "#7C9E8A" }} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Persona section (if available) */}

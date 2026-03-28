@@ -11,6 +11,19 @@ import { createCategory } from "../adapters/repositories/budgetRepository";
 
 const router = Router();
 
+function serializeUser(user: Awaited<ReturnType<typeof findUserById>>) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    personaId: user.personaId,
+    onboardingComplete: user.onboardingComplete,
+    monthlyIncome: user.monthlyIncome != null ? Number(user.monthlyIncome) : null,
+    createdAt: user.createdAt.toISOString(),
+  };
+}
+
 router.post("/register", async (req, res) => {
   const { email, password, name } = req.body;
 
@@ -29,17 +42,7 @@ router.post("/register", async (req, res) => {
   const user = await createUser({ email, passwordHash, name });
 
   const token = signToken({ userId: user.id, email: user.email });
-  res.status(201).json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      personaId: user.personaId,
-      onboardingComplete: user.onboardingComplete,
-      createdAt: user.createdAt.toISOString(),
-    },
-  });
+  res.status(201).json({ token, user: serializeUser(user) });
 });
 
 router.post("/login", async (req, res) => {
@@ -63,17 +66,7 @@ router.post("/login", async (req, res) => {
   }
 
   const token = signToken({ userId: user.id, email: user.email });
-  res.json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      personaId: user.personaId,
-      onboardingComplete: user.onboardingComplete,
-      createdAt: user.createdAt.toISOString(),
-    },
-  });
+  res.json({ token, user: serializeUser(user) });
 });
 
 router.get("/me", requireAuth, async (req, res) => {
@@ -82,14 +75,7 @@ router.get("/me", requireAuth, async (req, res) => {
     res.status(401).json({ error: "User not found" });
     return;
   }
-  res.json({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    personaId: user.personaId,
-    onboardingComplete: user.onboardingComplete,
-    createdAt: user.createdAt.toISOString(),
-  });
+  res.json(serializeUser(user));
 });
 
 router.post("/logout", requireAuth, (_req, res) => {

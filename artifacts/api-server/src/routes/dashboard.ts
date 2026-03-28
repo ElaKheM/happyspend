@@ -23,6 +23,16 @@ function getWeekDateRange() {
   };
 }
 
+function getMonthDateRange() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return {
+    startDate: monthStart.toISOString().split("T")[0]!,
+    endDate: monthEnd.toISOString().split("T")[0]!,
+  };
+}
+
 router.get("/", requireAuth, async (req, res) => {
   const userId = req.user!.userId;
 
@@ -37,9 +47,12 @@ router.get("/", requireAuth, async (req, res) => {
     return;
   }
 
-  const { startDate, endDate } = getWeekDateRange();
-  const [weekEntries, recentEntries] = await Promise.all([
-    getEntriesForUser(userId, { startDate, endDate }),
+  const { startDate: weekStart, endDate: weekEnd } = getWeekDateRange();
+  const { startDate: monthStart, endDate: monthEnd } = getMonthDateRange();
+
+  const [weekEntries, monthEntries, recentEntries] = await Promise.all([
+    getEntriesForUser(userId, { startDate: weekStart, endDate: weekEnd }),
+    getEntriesForUser(userId, { startDate: monthStart, endDate: monthEnd }),
     getEntriesForUser(userId),
   ]);
 
@@ -81,6 +94,7 @@ router.get("/", requireAuth, async (req, res) => {
     0
   );
   const totalSpent = weekEntries.reduce((sum, e) => sum + Number(e.amount), 0);
+  const totalSpentThisMonth = monthEntries.reduce((sum, e) => sum + Number(e.amount), 0);
   const daysLogged = new Set(weekEntries.map((e) => e.entryDate)).size;
 
   res.json({
@@ -90,6 +104,7 @@ router.get("/", requireAuth, async (req, res) => {
       name: user.name,
       personaId: user.personaId,
       onboardingComplete: user.onboardingComplete,
+      monthlyIncome: user.monthlyIncome != null ? Number(user.monthlyIncome) : null,
       createdAt: user.createdAt.toISOString(),
     },
     persona,
@@ -111,6 +126,7 @@ router.get("/", requireAuth, async (req, res) => {
     weeklyStats: {
       totalBudgeted,
       totalSpent,
+      totalSpentThisMonth,
       difference: totalBudgeted - totalSpent,
       daysLogged,
       entriesLogged: weekEntries.length,

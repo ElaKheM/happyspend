@@ -8,6 +8,7 @@ import entriesRouter from "./entries";
 import dashboardRouter from "./dashboard";
 import summariesRouter from "./summaries";
 import milestonesRouter from "./milestones";
+import profileRouter from "./profile";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/entries", entriesRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/summaries", summariesRouter);
 router.use("/milestones", milestonesRouter);
+router.use("/profile", profileRouter);
 
 export default router;

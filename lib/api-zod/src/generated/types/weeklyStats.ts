@@ -9,6 +9,7 @@
 export interface WeeklyStats {
   totalBudgeted: number;
   totalSpent: number;
+  totalSpentThisMonth: number;
   difference: number;
   daysLogged: number;
   entriesLogged: number;

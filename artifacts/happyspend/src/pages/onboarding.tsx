@@ -212,6 +212,8 @@ function PersonIllustration() {
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+  const [monthlyIncome, setMonthlyIncome] = useState<number | null>(null);
+  const [incomeInput, setIncomeInput] = useState("");
   const [categories, setCategories] = useState<{ name: string; icon: string; monthlyBudget: number; colour: string }[]>([]);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customName, setCustomName] = useState("");
@@ -225,7 +227,7 @@ export default function Onboarding() {
   const handleComplete = () => {
     if (!selectedPersona || categories.length === 0) return;
     completeMutation.mutate(
-      { data: { personaId: selectedPersona, categories } },
+      { data: { personaId: selectedPersona, categories, monthlyIncome } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
@@ -264,7 +266,7 @@ export default function Onboarding() {
       <div className="absolute top-0 left-0 w-full h-1 bg-[#E8E4DC] z-10">
         <div
           className="h-full transition-all duration-500 ease-out"
-          style={{ width: `${(step / 3) * 100}%`, background: "#7C9E8A" }}
+          style={{ width: `${(step / 4) * 100}%`, background: "#7C9E8A" }}
         />
       </div>
 
@@ -428,10 +430,106 @@ export default function Onboarding() {
           </motion.div>
         )}
 
-        {/* ── STEP 3: CATEGORIES ── */}
+        {/* ── STEP 3: MONTHLY INCOME ── */}
         {step === 3 && (
           <motion.div
-            key="step3"
+            key="step3-income"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            className="flex-1 flex flex-col px-8 pt-14 pb-8"
+            style={{ background: "#FAF9F6", minHeight: "100vh" }}
+          >
+            <div className="flex-1 flex flex-col justify-center">
+              <h2
+                className="mb-2 text-foreground"
+                style={{ fontFamily: DM_SANS, fontWeight: 700, fontSize: 26, lineHeight: 1.2 }}
+              >
+                What do you take home each month?
+              </h2>
+              <p style={{ color: "#777", marginBottom: 40, fontSize: 14, lineHeight: 1.6 }}>
+                After tax. An estimate is fine — you can update this anytime.
+              </p>
+
+              <div
+                style={{
+                  background: "#FFFFFF",
+                  borderRadius: 16,
+                  borderLeft: "4px solid #7C9E8A",
+                  boxShadow: "0 1px 8px rgba(0,0,0,0.07)",
+                  padding: "20px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <span style={{ fontFamily: DM_SANS, fontWeight: 700, fontSize: 22, color: "#7C9E8A" }}>R</span>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={incomeInput}
+                  onChange={(e) => {
+                    setIncomeInput(e.target.value);
+                    const n = parseFloat(e.target.value);
+                    setMonthlyIncome(!isNaN(n) && n > 0 ? n : null);
+                  }}
+                  style={{
+                    flex: 1,
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontFamily: DM_SANS,
+                    fontSize: 28,
+                    fontWeight: 700,
+                    color: "#1a1a1a",
+                    fontVariantNumeric: "tabular-nums slashed-zero",
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  setMonthlyIncome(null);
+                  setIncomeInput("");
+                  setStep(4);
+                }}
+                style={{
+                  marginTop: 16,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: DM_SANS,
+                  fontSize: 14,
+                  color: "#999",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+              >
+                Skip for now
+              </button>
+            </div>
+
+            <button
+              onClick={() => setStep(4)}
+              className="w-full mt-4 py-4 text-white font-semibold transition-opacity"
+              style={{
+                background: "#7C9E8A",
+                borderRadius: 100,
+                fontFamily: DM_SANS,
+                fontSize: 16,
+                fontWeight: 600,
+              }}
+            >
+              Continue
+            </button>
+          </motion.div>
+        )}
+
+        {/* ── STEP 4: CATEGORIES ── */}
+        {step === 4 && (
+          <motion.div
+            key="step4"
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}

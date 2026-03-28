@@ -37,7 +37,14 @@ export interface User {
   /** @nullable */
   personaId: string | null;
   onboardingComplete: boolean;
+  /** @nullable */
+  monthlyIncome: number | null;
   createdAt: string;
+}
+
+export interface UpdateProfileRequest {
+  /** @nullable */
+  monthlyIncome: number | null;
 }
 
 export interface AuthResponse {
@@ -59,6 +66,8 @@ export interface CreateCategoryRequest {
 export interface CompleteOnboardingRequest {
   personaId: string;
   categories: CreateCategoryRequest[];
+  /** @nullable */
+  monthlyIncome?: number | null;
 }
 
 export interface MilestoneThreshold {
@@ -169,6 +178,7 @@ export interface CreateEntryRequest {
 export interface WeeklyStats {
   totalBudgeted: number;
   totalSpent: number;
+  totalSpentThisMonth: number;
   difference: number;
   daysLogged: number;
   entriesLogged: number;

@@ -25,6 +25,11 @@ export default function Dashboard() {
 
   const { user, personaProgress, categoryStatuses, recentEntries, weeklyStats } = data;
 
+  const monthlyIncomePercent =
+    user.monthlyIncome && user.monthlyIncome > 0 && weeklyStats.totalSpentThisMonth > 0
+      ? Math.round((weeklyStats.totalSpentThisMonth / user.monthlyIncome) * 100)
+      : null;
+
   return (
     <div className="p-6 pb-10 space-y-8" style={{ background: "#FAF9F6", fontFamily: DM, minHeight: "100vh" }}>
 
@@ -103,6 +108,12 @@ export default function Dashboard() {
               ? `Saved ${formatMoney(weeklyStats.difference)} so far`
               : `${formatMoney(Math.abs(weeklyStats.difference))} more than planned — useful to know`}
           </div>
+
+          {monthlyIncomePercent !== null && (
+            <p style={{ fontSize: 13, color: "#888", marginTop: 10 }}>
+              That's {monthlyIncomePercent}% of your monthly income
+            </p>
+          )}
         </div>
       </section>
 

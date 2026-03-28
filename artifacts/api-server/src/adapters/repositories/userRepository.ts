@@ -20,9 +20,24 @@ export async function updateUserPersona(userId: string, personaId: string) {
   await db.update(usersTable).set({ personaId }).where(eq(usersTable.id, userId));
 }
 
-export async function setOnboardingComplete(userId: string, personaId: string) {
+export async function setOnboardingComplete(
+  userId: string,
+  personaId: string,
+  monthlyIncome?: number | null,
+) {
   await db
     .update(usersTable)
-    .set({ onboardingComplete: true, personaId })
+    .set({
+      onboardingComplete: true,
+      personaId,
+      ...(monthlyIncome != null ? { monthlyIncome: String(monthlyIncome) } : {}),
+    })
+    .where(eq(usersTable.id, userId));
+}
+
+export async function updateMonthlyIncome(userId: string, monthlyIncome: number | null) {
+  await db
+    .update(usersTable)
+    .set({ monthlyIncome: monthlyIncome != null ? String(monthlyIncome) : null })
     .where(eq(usersTable.id, userId));
 }

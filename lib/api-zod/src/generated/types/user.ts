@@ -13,5 +13,7 @@ export interface User {
   /** @nullable */
   personaId: string | null;
   onboardingComplete: boolean;
+  /** @nullable */
+  monthlyIncome: number | null;
   createdAt: string;
 }
