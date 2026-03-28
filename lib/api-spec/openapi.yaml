@@ -1,0 +1,951 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: HappySpend API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: personas
+    description: Persona operations
+  - name: categories
+    description: Budget categories
+  - name: entries
+    description: Budget entries
+  - name: summaries
+    description: Weekly summaries
+  - name: milestones
+    description: Milestone tracking
+  - name: dashboard
+    description: Dashboard data
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /personas:
+    get:
+      operationId: getPersonas
+      tags: [personas]
+      summary: List all personas
+      responses:
+        "200":
+          description: List of personas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Persona"
+
+  /personas/progress:
+    get:
+      operationId: getPersonaProgress
+      tags: [personas]
+      summary: Get current user persona progress
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Persona progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonaProgress"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /personas/choose:
+    post:
+      operationId: choosePersona
+      tags: [personas]
+      summary: Choose a persona
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChoosePersonaRequest"
+      responses:
+        "200":
+          description: Persona chosen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /onboarding/complete:
+    post:
+      operationId: completeOnboarding
+      tags: [auth]
+      summary: Complete onboarding
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteOnboardingRequest"
+      responses:
+        "200":
+          description: Onboarding complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /categories:
+    get:
+      operationId: getCategories
+      tags: [categories]
+      summary: Get user budget categories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BudgetCategory"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a budget category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryRequest"
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetCategory"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /categories/{id}:
+    patch:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a budget category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCategoryRequest"
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetCategory"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a budget category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Category deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /categories/status:
+    get:
+      operationId: getCategoryStatus
+      tags: [categories]
+      summary: Get spending status for all categories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Category statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /entries:
+    get:
+      operationId: getEntries
+      tags: [entries]
+      summary: Get budget entries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BudgetEntry"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createEntry
+      tags: [entries]
+      summary: Log a budget entry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEntryRequest"
+      responses:
+        "201":
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetEntry"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /entries/{id}:
+    delete:
+      operationId: deleteEntry
+      tags: [entries]
+      summary: Delete a budget entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Entry deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard data
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardData"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /summaries/weekly:
+    get:
+      operationId: getWeeklySummary
+      tags: [summaries]
+      summary: Get the latest weekly summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Weekly summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklySummary"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /milestones:
+    get:
+      operationId: getMilestones
+      tags: [milestones]
+      summary: Get user milestones
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of milestones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Milestone"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: ["string", "null"]
+      required:
+        - success
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+      required:
+        - email
+        - password
+        - name
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        personaId:
+          type: ["string", "null"]
+        onboardingComplete:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - email
+        - name
+        - personaId
+        - onboardingComplete
+        - createdAt
+
+    ChoosePersonaRequest:
+      type: object
+      properties:
+        personaId:
+          type: string
+      required:
+        - personaId
+
+    CompleteOnboardingRequest:
+      type: object
+      properties:
+        personaId:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateCategoryRequest"
+      required:
+        - personaId
+        - categories
+
+    Persona:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        tagline:
+          type: string
+        description:
+          type: string
+        milestoneThresholds:
+          type: array
+          items:
+            $ref: "#/components/schemas/MilestoneThreshold"
+      required:
+        - id
+        - name
+        - tagline
+        - description
+        - milestoneThresholds
+
+    MilestoneThreshold:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+      required:
+        - key
+        - label
+        - description
+
+    PersonaProgress:
+      type: object
+      properties:
+        persona:
+          $ref: "#/components/schemas/Persona"
+        percentage:
+          type: integer
+        achieved:
+          type: integer
+        total:
+          type: integer
+        stage:
+          type: string
+        nextMilestone:
+          type: ["object", "null"]
+          properties:
+            key:
+              type: string
+            label:
+              type: string
+            description:
+              type: string
+        isComplete:
+          type: boolean
+      required:
+        - persona
+        - percentage
+        - achieved
+        - total
+        - stage
+        - nextMilestone
+        - isComplete
+
+    BudgetCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        monthlyBudget:
+          type: number
+        colour:
+          type: string
+        icon:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - userId
+        - name
+        - monthlyBudget
+        - colour
+        - icon
+        - createdAt
+
+    CreateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        monthlyBudget:
+          type: number
+        colour:
+          type: string
+        icon:
+          type: string
+      required:
+        - name
+        - monthlyBudget
+        - colour
+        - icon
+
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        monthlyBudget:
+          type: ["number", "null"]
+        colour:
+          type: ["string", "null"]
+        icon:
+          type: ["string", "null"]
+
+    CategoryStatus:
+      type: object
+      properties:
+        category:
+          $ref: "#/components/schemas/BudgetCategory"
+        totalSpent:
+          type: number
+        weeklyBudget:
+          type: number
+        remaining:
+          type: number
+        percentageUsed:
+          type: number
+        status:
+          type: string
+        message:
+          type: string
+        reframe:
+          type: ["string", "null"]
+        colour:
+          type: string
+      required:
+        - category
+        - totalSpent
+        - weeklyBudget
+        - remaining
+        - percentageUsed
+        - status
+        - message
+        - reframe
+        - colour
+
+    BudgetEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        categoryId:
+          type: string
+        categoryName:
+          type: ["string", "null"]
+        categoryIcon:
+          type: ["string", "null"]
+        categoryColour:
+          type: ["string", "null"]
+        amount:
+          type: number
+        description:
+          type: ["string", "null"]
+        inputMethod:
+          type: string
+        entryDate:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - userId
+        - categoryId
+        - categoryName
+        - categoryIcon
+        - categoryColour
+        - amount
+        - description
+        - inputMethod
+        - entryDate
+        - createdAt
+
+    CreateEntryRequest:
+      type: object
+      properties:
+        categoryId:
+          type: string
+        amount:
+          type: number
+        description:
+          type: ["string", "null"]
+        inputMethod:
+          type: string
+          enum: [voice, photo, manual]
+        entryDate:
+          type: ["string", "null"]
+      required:
+        - categoryId
+        - amount
+        - inputMethod
+
+    DashboardData:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        persona:
+          type: ["object", "null"]
+          $ref: "#/components/schemas/Persona"
+        personaProgress:
+          type: ["object", "null"]
+          $ref: "#/components/schemas/PersonaProgress"
+        categoryStatuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryStatus"
+        recentEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/BudgetEntry"
+        weeklyStats:
+          $ref: "#/components/schemas/WeeklyStats"
+      required:
+        - user
+        - persona
+        - personaProgress
+        - categoryStatuses
+        - recentEntries
+        - weeklyStats
+
+    WeeklyStats:
+      type: object
+      properties:
+        totalBudgeted:
+          type: number
+        totalSpent:
+          type: number
+        difference:
+          type: number
+        daysLogged:
+          type: integer
+        entriesLogged:
+          type: integer
+      required:
+        - totalBudgeted
+        - totalSpent
+        - difference
+        - daysLogged
+        - entriesLogged
+
+    WeeklySummary:
+      type: object
+      properties:
+        weekSummary:
+          $ref: "#/components/schemas/WeeklyStats"
+        narrative:
+          $ref: "#/components/schemas/WeeklyNarrative"
+        newMilestones:
+          type: array
+          items:
+            type: string
+        personaProgress:
+          type: ["object", "null"]
+          $ref: "#/components/schemas/PersonaProgress"
+        weekStart:
+          type: string
+        weekEnd:
+          type: string
+      required:
+        - weekSummary
+        - narrative
+        - newMilestones
+        - personaProgress
+        - weekStart
+        - weekEnd
+
+    WeeklyNarrative:
+      type: object
+      properties:
+        openingLine:
+          type: string
+        categoryHighlights:
+          type: array
+          items:
+            type: string
+        closingLine:
+          type: string
+      required:
+        - openingLine
+        - categoryHighlights
+        - closingLine
+
+    Milestone:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        milestoneKey:
+          type: string
+        achievedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - milestoneKey
+        - achievedAt

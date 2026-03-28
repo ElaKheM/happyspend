@@ -1,0 +1,16 @@
+packages:
+  "framer-motion": "For fluid, native-feeling PWA animations and page transitions"
+  "clsx": "For conditional class name joining in UI components"
+  "tailwind-merge": "For merging Tailwind classes safely in UI components"
+  "@hookform/resolvers": "For Zod form validation"
+  "react-hook-form": "For robust form state management"
+  "date-fns": "For formatting dates in the history and summary views"
+  "lucide-react": "For consistent, beautiful iconography"
+
+images:
+  - path: "artifacts/happyspend/public/images/onboarding-hero.png"
+    description: "A soft, 3D abstract illustration of stacked smooth stones or coins in warm terracotta, peach, and sage green colors, conveying balance and calm financial growth."
+    aspect_ratio: "1:1"
+
+notes:
+  - "The app uses a globally patched window.fetch in App.tsx to automatically append the 'happyspend_token' from localStorage to all requests as a Bearer token, seamlessly authenticating the generated Orval hooks."
