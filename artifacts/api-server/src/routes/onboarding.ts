@@ -1,9 +1,48 @@
 import { Router } from "express";
 import { requireAuth } from "../middlewares/auth";
-import { setOnboardingComplete, updateUserPersona } from "../adapters/repositories/userRepository";
+import { setOnboardingComplete, updateUserPersona, saveEmotionalProfile } from "../adapters/repositories/userRepository";
 import { createCategory } from "../adapters/repositories/budgetRepository";
+import { saveOnboardingAnswer } from "../adapters/repositories/onboardingAnswersRepository";
 
 const router = Router();
+
+router.post("/answer", requireAuth, async (req, res) => {
+  const { questionKey, answerIndex } = req.body;
+  const userId = req.user!.userId;
+
+  if (!questionKey || answerIndex == null) {
+    return res.status(400).json({ error: "questionKey and answerIndex are required" });
+  }
+
+  try {
+    const answer = await saveOnboardingAnswer({
+      userId,
+      questionKey: String(questionKey),
+      answerIndex: Number(answerIndex),
+    });
+    res.status(201).json(answer);
+  } catch (err) {
+    console.error("POST /onboarding/answer error:", err);
+    res.status(500).json({ error: "Failed to save answer" });
+  }
+});
+
+router.post("/emotional-profile", requireAuth, async (req, res) => {
+  const { profile } = req.body;
+  const userId = req.user!.userId;
+
+  if (!profile || typeof profile !== "object") {
+    return res.status(400).json({ error: "profile object is required" });
+  }
+
+  try {
+    await saveEmotionalProfile(userId, profile);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("POST /onboarding/emotional-profile error:", err);
+    res.status(500).json({ error: "Failed to save emotional profile" });
+  }
+});
 
 router.post("/complete", requireAuth, async (req, res) => {
   const { personaId, categories, monthlyIncome } = req.body;

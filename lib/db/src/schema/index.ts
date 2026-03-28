@@ -6,3 +6,4 @@ export * from "./milestones";
 export * from "./weeklySummaries";
 export * from "./pushSubscriptions";
 export * from "./categoryCorrections";
+export * from "./onboardingAnswers";

@@ -35,9 +35,59 @@ export async function setOnboardingComplete(
     .where(eq(usersTable.id, userId));
 }
 
+export async function saveEmotionalProfile(
+  userId: string,
+  profile: Record<string, number>,
+) {
+  await db
+    .update(usersTable)
+    .set({ emotionalProfile: profile })
+    .where(eq(usersTable.id, userId));
+}
+
 export async function updateMonthlyIncome(userId: string, monthlyIncome: number | null) {
   await db
     .update(usersTable)
     .set({ monthlyIncome: monthlyIncome != null ? String(monthlyIncome) : null })
+    .where(eq(usersTable.id, userId));
+}
+
+export async function checkAndResetStreak(userId: string, today: string): Promise<void> {
+  const user = await findUserById(userId);
+  if (!user || !user.lastLoggedDate) return;
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0]!;
+
+  if (user.lastLoggedDate < yesterdayStr) {
+    await db
+      .update(usersTable)
+      .set({ streakCount: 0 })
+      .where(eq(usersTable.id, userId));
+  }
+}
+
+export async function updateStreak(userId: string, today: string): Promise<void> {
+  const user = await findUserById(userId);
+  if (!user) return;
+
+  if (user.lastLoggedDate === today) return;
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0]!;
+
+  const currentStreak = user.streakCount ?? 0;
+  const newStreakCount = user.lastLoggedDate === yesterdayStr ? currentStreak + 1 : 1;
+  const newLongestStreak = Math.max(user.longestStreak ?? 0, newStreakCount);
+
+  await db
+    .update(usersTable)
+    .set({
+      streakCount: newStreakCount,
+      lastLoggedDate: today,
+      longestStreak: newLongestStreak,
+    })
     .where(eq(usersTable.id, userId));
 }

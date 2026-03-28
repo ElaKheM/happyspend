@@ -1,11 +1,29 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { useGetPersonas, useCompleteOnboarding, getGetMeQueryKey } from "@workspace/api-client-react";
+import {
+  useGetPersonas,
+  useCompleteOnboarding,
+  getGetMeQueryKey,
+  saveOnboardingAnswer,
+  saveEmotionalProfile,
+} from "@workspace/api-client-react";
+import type { EmotionalProfile } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const DM_SANS = "'DM Sans', sans-serif";
+
+// ─── Step map ────────────────────────────────────────────────────────────────
+// 1  → Welcome
+// 2  → Question 1  (notification)
+// 3  → Question 2  (month_end)
+// 4  → Question 3  (spending_trigger)
+// 5  → Question 4  (money_story)
+// 6  → Question 5  (goal)
+// 7  → Persona selection
+// 8  → Monthly income
+// 9  → Categories
 
 const PERSONA_THEMES: Record<string, { bg: string; selectedBg: string; border: string; accent: string; illoBg: string }> = {
   "The Steady Builder":      { bg: "#EEF4F0", selectedBg: "#D8EDE2", border: "#7C9E8A", accent: "#7C9E8A", illoBg: "#D6E8DF" },
@@ -22,6 +40,61 @@ const PRESET_CATEGORIES = [
   { name: "Bills",       colour: "200 15% 50%" },
 ];
 
+// ─── Psychological questions ──────────────────────────────────────────────────
+const QUESTIONS: { key: keyof EmotionalProfile; question: string; answers: string[] }[] = [
+  {
+    key: "notification",
+    question: "When you get a bank balance notification, your first instinct is…",
+    answers: [
+      "To open it immediately",
+      "To swipe it away and check later",
+      "To feel a knot in my stomach",
+      "To feel nothing much — it's just a number",
+    ],
+  },
+  {
+    key: "month_end",
+    question: "At the end of the month, you usually feel…",
+    answers: [
+      "Relieved if you made it through",
+      "Surprised — you never quite know where it went",
+      "In control — you roughly knew where you stood",
+      "Guilty about something specific",
+    ],
+  },
+  {
+    key: "spending_trigger",
+    question: "When you spend on something you enjoy, you feel…",
+    answers: [
+      "Good — you earned it",
+      "Guilty almost immediately",
+      "Nothing — it's just a transaction",
+      "Anxious about what it means for later",
+    ],
+  },
+  {
+    key: "money_story",
+    question: "Growing up, money in your house was…",
+    answers: [
+      "Something people worried about",
+      "Something nobody really talked about",
+      "Fine — not a big deal",
+      "A source of security and confidence",
+    ],
+  },
+  {
+    key: "goal",
+    question: "If you got your spending completely under control, the first thing you'd do is…",
+    answers: [
+      "Feel less stressed day to day",
+      "Save for something specific",
+      "Pay something off",
+      "Have more freedom to say yes to things",
+    ],
+  },
+];
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
 function GroceriesIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C9E8A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -94,19 +167,15 @@ const CATEGORY_ICONS: Record<string, () => JSX.Element> = {
   "Bills":      BillsIcon,
 };
 
+// ─── Persona illustrations ────────────────────────────────────────────────────
 function SteadyBuilderIllo() {
   return (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      {/* head */}
       <circle cx="24" cy="10" r="6" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* slight smile */}
       <path d="M21 11 Q24 14 27 11" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      {/* torso */}
       <line x1="24" y1="16" x2="24" y2="33" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* arms — relaxed, angled slightly down */}
       <path d="M24 21 L16 28" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M24 21 L32 28" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* legs */}
       <path d="M24 33 L19 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M24 33 L29 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
@@ -116,17 +185,11 @@ function SteadyBuilderIllo() {
 function IntentionalSpenderIllo() {
   return (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      {/* head */}
       <circle cx="24" cy="10" r="6" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* torso */}
       <line x1="24" y1="16" x2="24" y2="33" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* left arm — bent, hand holds something */}
       <path d="M24 21 L16 26 L16 32" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      {/* small item in left hand */}
       <circle cx="16" cy="35" r="3" stroke="#7C9E8A" strokeWidth="1.5"/>
-      {/* right arm — relaxed */}
       <path d="M24 21 L32 27" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* legs */}
       <path d="M24 33 L19 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M24 33 L29 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
@@ -136,14 +199,10 @@ function IntentionalSpenderIllo() {
 function FreedomSeekerIllo() {
   return (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      {/* head */}
       <circle cx="24" cy="10" r="6" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* torso */}
       <line x1="24" y1="16" x2="24" y2="33" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* arms raised wide — open stance */}
       <path d="M24 20 L6 13" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M24 20 L42 13" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* legs — slightly apart */}
       <path d="M24 33 L18 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M24 33 L30 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
@@ -153,17 +212,11 @@ function FreedomSeekerIllo() {
 function DebtSlayerIllo() {
   return (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      {/* head — tilted slightly forward */}
       <circle cx="25" cy="10" r="6" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* torso — leaning forward */}
       <path d="M25 16 L22 33" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* right arm — raised fist */}
       <path d="M24 20 L34 11" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* fist */}
       <rect x="33" y="7" width="6" height="5" rx="2" stroke="#7C9E8A" strokeWidth="1.5" fill="none"/>
-      {/* left arm — angled down/back */}
       <path d="M24 20 L15 26" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* legs — stride */}
       <path d="M22 33 L16 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M22 33 L28 44" stroke="#7C9E8A" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
@@ -209,6 +262,7 @@ function PersonIllustration() {
   );
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
@@ -218,6 +272,11 @@ export default function Onboarding() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customBudget, setCustomBudget] = useState(0);
+
+  // Psychological questions
+  const [answers, setAnswers] = useState<Partial<EmotionalProfile>>({});
+  const [pendingAdvance, setPendingAdvance] = useState(false);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: personas } = useGetPersonas();
   const completeMutation = useCompleteOnboarding();
@@ -258,15 +317,45 @@ export default function Onboarding() {
     setShowCustomInput(false);
   };
 
+  // Question answer handler
+  const handleAnswer = (questionIndex: number, answerIndex: number) => {
+    if (pendingAdvance) return;
+    const q = QUESTIONS[questionIndex]!;
+
+    const nextAnswers = { ...answers, [q.key]: answerIndex };
+    setAnswers(nextAnswers);
+    setPendingAdvance(true);
+
+    // Fire-and-forget API save
+    saveOnboardingAnswer({ questionKey: q.key, answerIndex }).catch(() => {});
+
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    advanceTimerRef.current = setTimeout(() => {
+      const isLastQuestion = questionIndex === QUESTIONS.length - 1;
+      if (isLastQuestion) {
+        // Save full emotional profile then continue
+        const profile = nextAnswers as EmotionalProfile;
+        saveEmotionalProfile(profile).catch(() => {});
+      }
+      setPendingAdvance(false);
+      setStep((s) => s + 1);
+    }, 300);
+  };
+
+  // Progress bar: only visible for steps 7–9 (persona / income / categories)
+  const progressWidth = step >= 7 ? `${((step - 6) / 3) * 100}%` : "0%";
+  const showProgressBar = step >= 7;
+
   return (
     <div
       className="min-h-screen flex flex-col relative overflow-hidden"
       style={{ fontFamily: DM_SANS, fontSize: 15, lineHeight: 1.6 }}
     >
-      <div className="absolute top-0 left-0 w-full h-1 bg-[#E8E4DC] z-10">
+      {/* Progress bar — only for setup steps */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-[#E8E4DC] z-10" style={{ opacity: showProgressBar ? 1 : 0 }}>
         <div
           className="h-full transition-all duration-500 ease-out"
-          style={{ width: `${(step / 4) * 100}%`, background: "#7C9E8A" }}
+          style={{ width: progressWidth, background: "#7C9E8A" }}
         />
       </div>
 
@@ -280,16 +369,12 @@ export default function Onboarding() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
             className="flex-1 flex flex-col items-center justify-between px-8 pb-10 pt-16 text-center"
-            style={{
-              background: "linear-gradient(180deg, #FAF9F6 0%, #F0EDE6 100%)",
-              minHeight: "100vh",
-            }}
+            style={{ background: "linear-gradient(180deg, #FAF9F6 0%, #F0EDE6 100%)", minHeight: "100vh" }}
           >
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="mb-8">
                 <PersonIllustration />
               </div>
-
               <h1
                 className="mb-4 text-foreground leading-tight"
                 style={{ fontFamily: DM_SANS, fontWeight: 700, fontSize: 30 }}
@@ -300,27 +385,98 @@ export default function Onboarding() {
                 No spreadsheets. No guilt. Just building better habits that fit who you want to be.
               </p>
             </div>
-
             <button
               onClick={() => setStep(2)}
               className="w-full mt-10 py-4 text-white font-semibold text-base transition-opacity hover:opacity-90 active:scale-95"
-              style={{
-                background: "#7C9E8A",
-                borderRadius: 100,
-                fontFamily: DM_SANS,
-                fontSize: 16,
-                fontWeight: 600,
-              }}
+              style={{ background: "#7C9E8A", borderRadius: 100, fontFamily: DM_SANS, fontSize: 16, fontWeight: 600 }}
             >
               Let's Go
             </button>
           </motion.div>
         )}
 
-        {/* ── STEP 2: PERSONA SELECTION ── */}
-        {step === 2 && (
+        {/* ── STEPS 2–6: PSYCHOLOGICAL QUESTIONS ── */}
+        {step >= 2 && step <= 6 && (
           <motion.div
-            key="step2"
+            key={`question-${step}`}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="flex-1 flex flex-col px-6 pt-14 pb-10"
+            style={{ background: "linear-gradient(180deg, #FAF9F6 0%, #F0EDE6 100%)", minHeight: "100vh" }}
+          >
+            {/* Question counter */}
+            <p
+              style={{
+                fontFamily: DM_SANS,
+                fontSize: 12,
+                fontWeight: 500,
+                color: "#AAA",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                marginBottom: 28,
+              }}
+            >
+              Question {step - 1} of 5
+            </p>
+
+            {/* Question text */}
+            <h2
+              style={{
+                fontFamily: DM_SANS,
+                fontSize: 24,
+                fontWeight: 600,
+                color: "#1A1A2E",
+                lineHeight: 1.35,
+                marginBottom: 36,
+              }}
+            >
+              {QUESTIONS[step - 2]!.question}
+            </h2>
+
+            {/* Answer cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {QUESTIONS[step - 2]!.answers.map((answer, i) => {
+                const qKey = QUESTIONS[step - 2]!.key;
+                const isSelected = answers[qKey] === i;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleAnswer(step - 2, i)}
+                    disabled={pendingAdvance}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "16px 18px",
+                      background: isSelected ? "#EEF4F0" : "#FFFFFF",
+                      borderRadius: 14,
+                      border: `1.5px solid ${isSelected ? "#7C9E8A" : "#E8E4DC"}`,
+                      boxShadow: isSelected
+                        ? "0 2px 12px rgba(124,158,138,0.18)"
+                        : "0 1px 4px rgba(0,0,0,0.06)",
+                      cursor: pendingAdvance ? "default" : "pointer",
+                      fontFamily: DM_SANS,
+                      fontSize: 15,
+                      fontWeight: isSelected ? 600 : 500,
+                      color: isSelected ? "#2D5A3F" : "#333",
+                      lineHeight: 1.4,
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {answer}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── STEP 7: PERSONA SELECTION ── */}
+        {step === 7 && (
+          <motion.div
+            key="step7"
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
@@ -351,9 +507,7 @@ export default function Onboarding() {
                       height: 80,
                       background: isSelected ? theme.selectedBg : theme.bg,
                       borderRadius: 16,
-                      boxShadow: isSelected
-                        ? `0 4px 18px ${theme.border}40`
-                        : "0 1px 6px rgba(0,0,0,0.06)",
+                      boxShadow: isSelected ? `0 4px 18px ${theme.border}40` : "0 1px 6px rgba(0,0,0,0.06)",
                       padding: "0 16px 0 14px",
                       display: "flex",
                       alignItems: "center",
@@ -363,23 +517,15 @@ export default function Onboarding() {
                       borderLeft: `4px solid ${theme.border}`,
                     }}
                   >
-                    {/* Illustration */}
                     <div
                       style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: 14,
+                        width: 52, height: 52, borderRadius: 14,
                         background: isSelected ? theme.illoBg : theme.illoBg + "99",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}
                     >
                       {Illo && <Illo />}
                     </div>
-
-                    {/* Text */}
                     <div style={{ flex: 1, textAlign: "left" }}>
                       <div style={{ fontFamily: DM_SANS, fontWeight: 700, fontSize: 16, color: "#1a1a1a", lineHeight: 1.2 }}>
                         {p.name}
@@ -388,19 +534,13 @@ export default function Onboarding() {
                         {p.tagline}
                       </div>
                     </div>
-
-                    {/* Radio button */}
                     <div
                       style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: "50%",
+                        width: 22, height: 22, borderRadius: "50%",
                         border: `2px solid ${isSelected ? theme.accent : "#CCC"}`,
                         background: isSelected ? theme.accent : "transparent",
                         flexShrink: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: "flex", alignItems: "center", justifyContent: "center",
                         transition: "all 0.2s",
                       }}
                     >
@@ -414,26 +554,20 @@ export default function Onboarding() {
             </div>
 
             <button
-              onClick={() => setStep(3)}
+              onClick={() => setStep(8)}
               disabled={!selectedPersona}
               className="w-full mt-4 py-4 text-white font-semibold transition-opacity disabled:opacity-40"
-              style={{
-                background: "#7C9E8A",
-                borderRadius: 100,
-                fontFamily: DM_SANS,
-                fontSize: 16,
-                fontWeight: 600,
-              }}
+              style={{ background: "#7C9E8A", borderRadius: 100, fontFamily: DM_SANS, fontSize: 16, fontWeight: 600 }}
             >
               This is me
             </button>
           </motion.div>
         )}
 
-        {/* ── STEP 3: MONTHLY INCOME ── */}
-        {step === 3 && (
+        {/* ── STEP 8: MONTHLY INCOME ── */}
+        {step === 8 && (
           <motion.div
-            key="step3-income"
+            key="step8-income"
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
@@ -453,14 +587,9 @@ export default function Onboarding() {
 
               <div
                 style={{
-                  background: "#FFFFFF",
-                  borderRadius: 16,
-                  borderLeft: "4px solid #7C9E8A",
-                  boxShadow: "0 1px 8px rgba(0,0,0,0.07)",
-                  padding: "20px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
+                  background: "#FFFFFF", borderRadius: 16, borderLeft: "4px solid #7C9E8A",
+                  boxShadow: "0 1px 8px rgba(0,0,0,0.07)", padding: "20px 20px",
+                  display: "flex", alignItems: "center", gap: 10,
                 }}
               >
                 <span style={{ fontFamily: DM_SANS, fontWeight: 700, fontSize: 22, color: "#7C9E8A" }}>R</span>
@@ -475,34 +604,17 @@ export default function Onboarding() {
                     setMonthlyIncome(!isNaN(n) && n > 0 ? n : null);
                   }}
                   style={{
-                    flex: 1,
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    fontFamily: DM_SANS,
-                    fontSize: 28,
-                    fontWeight: 700,
-                    color: "#1a1a1a",
+                    flex: 1, border: "none", outline: "none", background: "transparent",
+                    fontFamily: DM_SANS, fontSize: 28, fontWeight: 700, color: "#1a1a1a",
                   }}
                 />
               </div>
 
               <button
-                onClick={() => {
-                  setMonthlyIncome(null);
-                  setIncomeInput("");
-                  setStep(4);
-                }}
+                onClick={() => { setMonthlyIncome(null); setIncomeInput(""); setStep(9); }}
                 style={{
-                  marginTop: 16,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: DM_SANS,
-                  fontSize: 14,
-                  color: "#999",
-                  textDecoration: "underline",
-                  padding: 0,
+                  marginTop: 16, background: "none", border: "none", cursor: "pointer",
+                  fontFamily: DM_SANS, fontSize: 14, color: "#999", textDecoration: "underline", padding: 0,
                 }}
               >
                 Skip for now
@@ -510,25 +622,19 @@ export default function Onboarding() {
             </div>
 
             <button
-              onClick={() => setStep(4)}
+              onClick={() => setStep(9)}
               className="w-full mt-4 py-4 text-white font-semibold transition-opacity"
-              style={{
-                background: "#7C9E8A",
-                borderRadius: 100,
-                fontFamily: DM_SANS,
-                fontSize: 16,
-                fontWeight: 600,
-              }}
+              style={{ background: "#7C9E8A", borderRadius: 100, fontFamily: DM_SANS, fontSize: 16, fontWeight: 600 }}
             >
               Continue
             </button>
           </motion.div>
         )}
 
-        {/* ── STEP 4: CATEGORIES ── */}
-        {step === 4 && (
+        {/* ── STEP 9: CATEGORIES ── */}
+        {step === 9 && (
           <motion.div
-            key="step4"
+            key="step9"
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
@@ -560,40 +666,23 @@ export default function Onboarding() {
                       borderLeft: isSelected ? "4px solid #7C9E8A" : "4px solid transparent",
                       boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
                       padding: "14px 16px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                      cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 14, cursor: "pointer",
                     }}
                     onClick={() => toggleCategory(cat)}
                   >
                     <div
                       style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 12,
+                        width: 42, height: 42, borderRadius: 12,
                         background: isSelected ? "#D6E8DF" : "#F3F3F3",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}
                     >
                       {Icon && <Icon />}
                     </div>
-
-                    <span
-                      className="flex-1"
-                      style={{ fontFamily: DM_SANS, fontWeight: 600, fontSize: 15, color: "#1a1a1a" }}
-                    >
+                    <span className="flex-1" style={{ fontFamily: DM_SANS, fontWeight: 600, fontSize: 15, color: "#1a1a1a" }}>
                       {cat.name}
                     </span>
-
-                    <div
-                      className="flex items-center"
-                      style={{ gap: 4 }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="flex items-center" style={{ gap: 4 }} onClick={(e) => e.stopPropagation()}>
                       <span style={{ color: "#7C9E8A", fontWeight: 600, fontSize: 14 }}>R</span>
                       <input
                         type="number"
@@ -601,20 +690,12 @@ export default function Onboarding() {
                         value={isSelected ? (selectedCat?.monthlyBudget ?? 0) : 0}
                         disabled={!isSelected}
                         onChange={(e) => updateBudget(cat.name, Number(e.target.value))}
-                        onFocus={() => {
-                          if (!isSelected) toggleCategory(cat);
-                        }}
+                        onFocus={() => { if (!isSelected) toggleCategory(cat); }}
                         placeholder="0"
                         style={{
-                          width: 64,
-                          border: "none",
-                          outline: "none",
-                          background: "transparent",
-                          fontFamily: DM_SANS,
-                          fontSize: 15,
-                          fontWeight: 600,
-                          color: isSelected ? "#1a1a1a" : "#bbb",
-                          textAlign: "right",
+                          width: 64, border: "none", outline: "none", background: "transparent",
+                          fontFamily: DM_SANS, fontSize: 15, fontWeight: 600,
+                          color: isSelected ? "#1a1a1a" : "#bbb", textAlign: "right",
                         }}
                       />
                     </div>
@@ -622,41 +703,27 @@ export default function Onboarding() {
                 );
               })}
 
-              {/* Custom categories added by user */}
+              {/* Custom categories */}
               {categories
                 .filter((c) => !PRESET_CATEGORIES.find((p) => p.name === c.name))
                 .map((cat, i) => (
                   <div
                     key={`custom-${i}`}
                     style={{
-                      background: "#EEF4F0",
-                      borderRadius: 14,
-                      borderLeft: "4px solid #7C9E8A",
-                      boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
-                      padding: "14px 16px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
+                      background: "#EEF4F0", borderRadius: 14, borderLeft: "4px solid #7C9E8A",
+                      boxShadow: "0 1px 6px rgba(0,0,0,0.07)", padding: "14px 16px",
+                      display: "flex", alignItems: "center", gap: 14,
                     }}
                   >
                     <div
                       style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 12,
-                        background: "#D6E8DF",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
+                        width: 42, height: 42, borderRadius: 12, background: "#D6E8DF",
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}
                     >
                       <CustomIcon />
                     </div>
-                    <span
-                      className="flex-1"
-                      style={{ fontFamily: DM_SANS, fontWeight: 600, fontSize: 15, color: "#1a1a1a" }}
-                    >
+                    <span className="flex-1" style={{ fontFamily: DM_SANS, fontWeight: 600, fontSize: 15, color: "#1a1a1a" }}>
                       {cat.name}
                     </span>
                     <div className="flex items-center" style={{ gap: 4 }}>
@@ -667,15 +734,8 @@ export default function Onboarding() {
                         value={cat.monthlyBudget}
                         onChange={(e) => updateBudget(cat.name, Number(e.target.value))}
                         style={{
-                          width: 64,
-                          border: "none",
-                          outline: "none",
-                          background: "transparent",
-                          fontFamily: DM_SANS,
-                          fontSize: 15,
-                          fontWeight: 600,
-                          color: "#1a1a1a",
-                          textAlign: "right",
+                          width: 64, border: "none", outline: "none", background: "transparent",
+                          fontFamily: DM_SANS, fontSize: 15, fontWeight: 600, color: "#1a1a1a", textAlign: "right",
                         }}
                       />
                     </div>
@@ -686,14 +746,9 @@ export default function Onboarding() {
               {showCustomInput && (
                 <div
                   style={{
-                    background: "#FFFFFF",
-                    borderRadius: 14,
-                    borderLeft: "4px solid #c8d8cf",
-                    boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
-                    padding: "12px 16px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
+                    background: "#FFFFFF", borderRadius: 14, borderLeft: "4px solid #c8d8cf",
+                    boxShadow: "0 1px 6px rgba(0,0,0,0.07)", padding: "12px 16px",
+                    display: "flex", alignItems: "center", gap: 10,
                   }}
                 >
                   <input
@@ -704,13 +759,8 @@ export default function Onboarding() {
                     onChange={(e) => setCustomName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addCustomCategory()}
                     style={{
-                      flex: 1,
-                      border: "none",
-                      outline: "none",
-                      background: "transparent",
-                      fontFamily: DM_SANS,
-                      fontSize: 15,
-                      color: "#1a1a1a",
+                      flex: 1, border: "none", outline: "none", background: "transparent",
+                      fontFamily: DM_SANS, fontSize: 15, color: "#1a1a1a",
                     }}
                   />
                   <span style={{ color: "#7C9E8A", fontWeight: 600, fontSize: 14 }}>R</span>
@@ -721,29 +771,15 @@ export default function Onboarding() {
                     value={customBudget || ""}
                     onChange={(e) => setCustomBudget(Number(e.target.value))}
                     style={{
-                      width: 60,
-                      border: "none",
-                      outline: "none",
-                      background: "transparent",
-                      fontFamily: DM_SANS,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: "#1a1a1a",
-                      textAlign: "right",
+                      width: 60, border: "none", outline: "none", background: "transparent",
+                      fontFamily: DM_SANS, fontSize: 15, fontWeight: 600, color: "#1a1a1a", textAlign: "right",
                     }}
                   />
                   <button
                     onClick={addCustomCategory}
                     style={{
-                      background: "#7C9E8A",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "4px 10px",
-                      fontFamily: DM_SANS,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: "pointer",
+                      background: "#7C9E8A", color: "#fff", border: "none", borderRadius: 8,
+                      padding: "4px 10px", fontFamily: DM_SANS, fontSize: 13, fontWeight: 600, cursor: "pointer",
                     }}
                   >
                     Add
@@ -751,20 +787,13 @@ export default function Onboarding() {
                 </div>
               )}
 
-              {/* Add custom category button */}
               {!showCustomInput && (
                 <button
                   onClick={() => setShowCustomInput(true)}
                   className="w-full flex items-center justify-center gap-2 py-3 transition-opacity hover:opacity-70"
                   style={{
-                    background: "transparent",
-                    border: "1.5px dashed #c8d8cf",
-                    borderRadius: 14,
-                    fontFamily: DM_SANS,
-                    fontSize: 14,
-                    color: "#7C9E8A",
-                    fontWeight: 500,
-                    cursor: "pointer",
+                    background: "transparent", border: "1.5px dashed #c8d8cf", borderRadius: 14,
+                    fontFamily: DM_SANS, fontSize: 14, color: "#7C9E8A", fontWeight: 500, cursor: "pointer",
                   }}
                 >
                   <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Add a category
@@ -776,18 +805,13 @@ export default function Onboarding() {
               onClick={handleComplete}
               disabled={categories.length === 0 || completeMutation.isPending}
               className="w-full mt-4 py-4 text-white font-semibold transition-opacity disabled:opacity-40"
-              style={{
-                background: "#7C9E8A",
-                borderRadius: 100,
-                fontFamily: DM_SANS,
-                fontSize: 16,
-                fontWeight: 600,
-              }}
+              style={{ background: "#7C9E8A", borderRadius: 100, fontFamily: DM_SANS, fontSize: 16, fontWeight: 600 }}
             >
               {completeMutation.isPending ? "Creating your space…" : "I'm ready"}
             </button>
           </motion.div>
         )}
+
       </AnimatePresence>
     </div>
   );

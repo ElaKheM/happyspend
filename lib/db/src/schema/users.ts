@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, timestamp, uuid, numeric, integer, date } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, timestamp, uuid, numeric, integer, date, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -16,6 +16,9 @@ export const usersTable = pgTable("users", {
   notificationsEnabled: boolean("notifications_enabled").default(false).notNull(),
   reminderTime1: text("reminder_time_1").default("12:30").notNull(),
   reminderTime2: text("reminder_time_2").default("19:00").notNull(),
+  emotionalProfile: jsonb("emotional_profile").default(null),
+  personaRevealedAt: timestamp("persona_revealed_at", { withTimezone: true }),
+  spendDnaUnlocked: boolean("spend_dna_unlocked").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
