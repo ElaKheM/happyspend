@@ -251,7 +251,7 @@ export default function Profile() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontFamily: DM, fontWeight: 700, fontSize: 22, color: "#1a1a1a" }}>
               {user.monthlyIncome != null
-                ? `R ${Intl.NumberFormat("en-ZA").format(user.monthlyIncome)}`
+                ? `R${Intl.NumberFormat("en-ZA").format(user.monthlyIncome)}`
                 : <span style={{ color: "#bbb", fontWeight: 500, fontSize: 15 }}>Not set</span>}
             </span>
             <button onClick={startEditIncome} style={{ background: "none", border: "none", cursor: "pointer", padding: 6 }}>
