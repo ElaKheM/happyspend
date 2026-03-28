@@ -134,6 +134,7 @@ export default function Dashboard() {
                 color: "#1a1a1a",
                 lineHeight: 1,
                 letterSpacing: "-1px",
+                fontVariantNumeric: "normal",
               }}
             >
               {formatMoney(remaining)}
