@@ -1,7 +1,7 @@
 import { useGetMe, useLogout, useUpdateProfile } from "@workspace/api-client-react";
-import { LogOut, Mail, Calendar, Pencil, Check, X, Bell, BellOff } from "lucide-react";
+import { LogOut, Mail, Calendar, Pencil, Check, X, Bell, BellOff, Star } from "lucide-react";
 import { format } from "date-fns";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
@@ -190,11 +190,23 @@ export default function Profile() {
               {initials}
             </span>
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <h2 style={{ fontFamily: DM, fontWeight: 700, fontSize: 20, color: "#1a1a1a", marginBottom: 2 }}>
               {user.name}
             </h2>
-            <p style={{ fontSize: 14, color: "#777" }}>{user.email}</p>
+            <p style={{ fontSize: 14, color: "#777", marginBottom: 8 }}>{user.email}</p>
+            {(user as any).isPremium ? (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#EEF4F0", borderRadius: 100, padding: "4px 10px" }}>
+                <Star style={{ color: "#7C9E8A", width: 12, height: 12 }} fill="#7C9E8A" />
+                <span style={{ fontFamily: DM, fontSize: 12, fontWeight: 700, color: "#7C9E8A" }}>Premium</span>
+              </div>
+            ) : (
+              <Link href="/upgrade" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#EEF4F0", borderRadius: 100, padding: "4px 12px", textDecoration: "none" }}>
+                <span style={{ fontFamily: DM, fontSize: 12, fontWeight: 600, color: "#7C9E8A" }}>Free plan</span>
+                <span style={{ color: "#9C9690", fontSize: 12 }}>·</span>
+                <span style={{ fontFamily: DM, fontSize: 12, fontWeight: 700, color: "#7C9E8A" }}>Upgrade</span>
+              </Link>
+            )}
           </div>
         </div>
 

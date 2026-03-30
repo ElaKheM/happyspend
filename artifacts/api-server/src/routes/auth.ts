@@ -25,6 +25,9 @@ function serializeUser(user: NonNullable<Awaited<ReturnType<typeof findUserById>
     createdAt: user.createdAt.toISOString(),
     spendDnaUnlocked: user.spendDnaUnlocked ?? false,
     emotionalProfile: user.emotionalProfile ?? null,
+    isPremium: user.isPremium ?? false,
+    premiumSince: user.premiumSince?.toISOString() ?? null,
+    premiumExpires: user.premiumExpires?.toISOString() ?? null,
   };
 }
 

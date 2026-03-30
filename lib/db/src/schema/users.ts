@@ -19,6 +19,9 @@ export const usersTable = pgTable("users", {
   emotionalProfile: jsonb("emotional_profile").default(null),
   personaRevealedAt: timestamp("persona_revealed_at", { withTimezone: true }),
   spendDnaUnlocked: boolean("spend_dna_unlocked").default(false).notNull(),
+  isPremium: boolean("is_premium").default(false).notNull(),
+  premiumSince: timestamp("premium_since", { withTimezone: true }),
+  premiumExpires: timestamp("premium_expires", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

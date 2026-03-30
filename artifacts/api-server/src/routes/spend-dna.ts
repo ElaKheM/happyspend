@@ -129,6 +129,7 @@ router.get("/", requireAuth, async (req, res) => {
       emotionalProfile: user.emotionalProfile ?? null,
       streakCount: user.streakCount ?? 0,
       spendDnaUnlocked: user.spendDnaUnlocked ?? false,
+      isPremium: user.isPremium ?? false,
     },
     stats: {
       streakCount: user.streakCount ?? 0,

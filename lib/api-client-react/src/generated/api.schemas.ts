@@ -47,6 +47,11 @@ export interface User {
   spendDnaUnlocked: boolean;
   /** @nullable */
   emotionalProfile: Record<string, number> | null;
+  isPremium: boolean;
+  /** @nullable */
+  premiumSince: string | null;
+  /** @nullable */
+  premiumExpires: string | null;
 }
 
 export interface UpdateProfileRequest {

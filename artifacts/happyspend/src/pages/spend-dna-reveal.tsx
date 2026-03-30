@@ -112,6 +112,7 @@ export default function SpendDnaReveal() {
   const stats = data?.stats ?? { streakCount: 30, totalEntriesThisMonth: 0, topCategoryName: "—" };
   const insights = data?.insights ?? {};
 
+  const isPremium: boolean = data?.user?.isPremium ?? false;
   const { logTimeOfDay, topCategoryDayPercent, weeklyTrend } = insights;
 
   return (
@@ -233,79 +234,82 @@ export default function SpendDnaReveal() {
             locked={false}
           />
 
-          {/* Insight 2: Premium — blurred */}
+          {/* Insight 2 */}
           <InsightCard
             text={
               topCategoryDayPercent
                 ? `${topCategoryDayPercent.percent}% of your ${topCategoryDayPercent.categoryName} spend happens on ${topCategoryDayPercent.dayName}. That's not a problem. That's a pattern.`
                 : "Your spending has a day-of-week pattern. That's not a problem. That's a pattern."
             }
-            locked
+            locked={!isPremium}
           />
 
-          {/* Insight 3: Premium — blurred */}
+          {/* Insight 3 */}
           <InsightCard
             text={
               weeklyTrend
                 ? `Your daily spend ${weeklyTrend.direction} by R${weeklyTrend.amount} from your first week to your last. ${weeklyTrend.message}`
                 : "Your spending pattern changed between week one and week four. Worth knowing."
             }
-            locked
+            locked={!isPremium}
           />
 
-          {/* Upgrade card */}
-          <div
-            style={{
-              background: "#FFFFFF",
-              borderRadius: 16,
-              boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-              padding: "22px 20px",
-              textAlign: "center",
-            }}
-          >
-            <p
+          {/* Upgrade card — only for free users */}
+          {!isPremium && (
+            <div
               style={{
-                fontFamily: DM,
-                fontWeight: 700,
-                fontSize: 16,
-                color: "#1a1a1a",
-                marginBottom: 4,
+                background: "#FFFFFF",
+                borderRadius: 16,
+                boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                padding: "22px 20px",
+                textAlign: "center",
               }}
             >
-              Unlock your full Spend DNA
-            </p>
-            <p
-              style={{
-                fontFamily: DM,
-                fontSize: 22,
-                fontWeight: 800,
-                color: SAGE,
-                marginBottom: 16,
-              }}
-            >
-              R49/month
-            </p>
-            <button
-              style={{
-                width: "100%",
-                background: SAGE,
-                color: "#FFFFFF",
-                border: "none",
-                borderRadius: 100,
-                padding: "14px 0",
-                fontFamily: DM,
-                fontWeight: 700,
-                fontSize: 15,
-                cursor: "pointer",
-                marginBottom: 10,
-              }}
-            >
-              See everything
-            </button>
-            <p style={{ fontSize: 12, color: "#999" }}>
-              First 3 months — cancel anytime
-            </p>
-          </div>
+              <p
+                style={{
+                  fontFamily: DM,
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: "#1a1a1a",
+                  marginBottom: 4,
+                }}
+              >
+                Unlock your full Spend DNA
+              </p>
+              <p
+                style={{
+                  fontFamily: DM,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: SAGE,
+                  marginBottom: 16,
+                }}
+              >
+                R49/month
+              </p>
+              <button
+                onClick={() => navigate("/upgrade")}
+                style={{
+                  width: "100%",
+                  background: SAGE,
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: 100,
+                  padding: "14px 0",
+                  fontFamily: DM,
+                  fontWeight: 700,
+                  fontSize: 15,
+                  cursor: "pointer",
+                  marginBottom: 10,
+                }}
+              >
+                See everything
+              </button>
+              <p style={{ fontSize: 12, color: "#999" }}>
+                First 3 months — cancel anytime
+              </p>
+            </div>
+          )}
         </div>
       </Section>
 

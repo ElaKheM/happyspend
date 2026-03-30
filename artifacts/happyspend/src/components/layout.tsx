@@ -49,7 +49,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     return null;
   }
 
-  const hideNav = isAuthRoute || location === "/onboarding" || location === "/spend-dna";
+  const hideNav = isAuthRoute || location === "/onboarding" || location === "/spend-dna" || location === "/upgrade";
 
   return (
     <div

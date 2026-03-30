@@ -13,6 +13,7 @@ import Summary from "@/pages/summary";
 import Profile from "@/pages/profile";
 import Habit from "@/pages/habit";
 import SpendDnaReveal from "@/pages/spend-dna-reveal";
+import Upgrade from "@/pages/upgrade";
 import NotFound from "@/pages/not-found";
 
 // Patch window.fetch globally to append the auth token automatically for the generated Orval hooks
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/summary" component={Summary} />
         <Route path="/profile" component={Profile} />
         <Route path="/spend-dna" component={SpendDnaReveal} />
+        <Route path="/upgrade" component={Upgrade} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
